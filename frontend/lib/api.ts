@@ -1,155 +1,210 @@
-import axios from 'axios';
+import type {
+  ApiResponse,
+  LoginResponse,
+  PaginatedResponse,
+  Procurement,
+  Vendor,
+  Anomaly,
+  Statistics,
+  User
+} from '@/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-// Create axios instance
-export const api = axios.create({
-  baseURL: `${API_URL}/api`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+class ApiClient {
+  private getHeaders(includeAuth = true): HeadersInit {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
 
-// Add auth token to requests
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
-});
-
-// Handle token refresh on 401
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('access_token');
-        window.location.href = '/login';
+    if (includeAuth && typeof window !== 'undefined') {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
     }
-    return Promise.reject(error);
+
+    return headers;
   }
-);
 
-// Auth API
-export const authAPI = {
-  login: (email: string, password: string) =>
-    api.post('/auth/login', { email, password }),
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {},
+    includeAuth = true
+  ): Promise<ApiResponse<T>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers: {
+          ...this.getHeaders(includeAuth),
+          ...options.headers,
+        },
+      });
 
-  register: (data: any) =>
-    api.post('/auth/register', data),
+      const data = await response.json();
 
-  logout: () =>
-    api.post('/auth/logout'),
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Request failed');
+      }
 
-  getCurrentUser: () =>
-    api.get('/auth/me'),
+      return data;
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  }
 
-  updateProfile: (data: any) =>
-    api.put('/auth/me', data),
-};
+  // Auth endpoints
+  async login(email: string, password: string): Promise<ApiResponse<LoginResponse>> {
+    const response = await this.request<LoginResponse>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }, false);
 
-// Procurement API
-export const procurementAPI = {
-  getPublic: (page = 1, limit = 20) =>
-    api.get(`/procurement/public?page=${page}&limit=${limit}`),
+    if (response.success && response.data) {
+      localStorage.setItem('access_token', response.data.access_token);
+      localStorage.setItem('refresh_token', response.data.refresh_token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
 
-  getAll: (params?: any) =>
-    api.get('/procurement', { params }),
+    return response;
+  }
 
-  getById: (id: string) =>
-    api.get(`/procurement/${id}`),
+  async register(userData: {
+    email: string;
+    password: string;
+    full_name: string;
+    department?: string;
+    phone?: string;
+  }): Promise<ApiResponse<User>> {
+    return this.request('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    }, false);
+  }
 
-  getPublicById: (id: string) =>
-    api.get(`/procurement/public/${id}`),
+  async logout(): Promise<void> {
+    try {
+      await this.request('/api/auth/logout', { method: 'POST' });
+    } finally {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+    }
+  }
 
-  create: (data: any) =>
-    api.post('/procurement', data),
+  async getCurrentUser(): Promise<ApiResponse<User>> {
+    return this.request('/api/auth/me');
+  }
 
-  update: (id: string, data: any) =>
-    api.put(`/procurement/${id}`, data),
+  // Procurement endpoints
+  async getPublicProcurements(page = 1, perPage = 20): Promise<ApiResponse<PaginatedResponse<Procurement>>> {
+    return this.request(`/api/procurement/public?page=${page}&per_page=${perPage}`, {}, false);
+  }
 
-  delete: (id: string) =>
-    api.delete(`/procurement/${id}`),
+  async getProcurementById(id: string, isPublic = false): Promise<ApiResponse<Procurement>> {
+    const endpoint = isPublic ? `/api/procurement/public/${id}` : `/api/procurement/${id}`;
+    return this.request(endpoint, {}, !isPublic);
+  }
 
-  getStatistics: () =>
-    api.get('/procurement/statistics'),
-};
+  async getProcurements(page = 1, perPage = 20): Promise<ApiResponse<PaginatedResponse<Procurement>>> {
+    return this.request(`/api/procurement?page=${page}&per_page=${perPage}`);
+  }
 
-// Document API
-export const documentAPI = {
-  upload: (formData: FormData) =>
-    api.post('/documents/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+  async createProcurement(data: Partial<Procurement>): Promise<ApiResponse<Procurement>> {
+    return this.request('/api/procurement', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 
-  getMetadata: (id: string) =>
-    api.get(`/documents/${id}`),
+  async updateProcurement(id: string, data: Partial<Procurement>): Promise<ApiResponse<Procurement>> {
+    return this.request(`/api/procurement/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
 
-  download: (id: string) =>
-    api.get(`/documents/${id}/download`, { responseType: 'blob' }),
+  async deleteProcurement(id: string): Promise<ApiResponse<void>> {
+    return this.request(`/api/procurement/${id}`, { method: 'DELETE' });
+  }
 
-  delete: (id: string) =>
-    api.delete(`/documents/${id}`),
+  async getProcurementStatistics(): Promise<ApiResponse<Statistics>> {
+    return this.request('/api/procurement/statistics');
+  }
 
-  getProcurementDocs: (procurementId: string) =>
-    api.get(`/documents/procurement/${procurementId}`),
+  // Vendor endpoints
+  async getPublicVendors(page = 1, perPage = 20): Promise<ApiResponse<PaginatedResponse<Vendor>>> {
+    return this.request(`/api/vendors/public?page=${page}&per_page=${perPage}`, {}, false);
+  }
 
-  getParsedData: (id: string) =>
-    api.get(`/documents/${id}/parse`),
-};
+  async getVendors(page = 1, perPage = 20): Promise<ApiResponse<PaginatedResponse<Vendor>>> {
+    return this.request(`/api/vendors?page=${page}&per_page=${perPage}`);
+  }
 
-// Anomaly API
-export const anomalyAPI = {
-  analyze: (procurementId: string) =>
-    api.post(`/analysis/anomaly/${procurementId}`),
+  async getVendorById(id: string): Promise<ApiResponse<Vendor>> {
+    return this.request(`/api/vendors/${id}`);
+  }
 
-  getAll: (params?: any) =>
-    api.get('/analysis/anomalies', { params }),
+  async createVendor(data: Partial<Vendor>): Promise<ApiResponse<Vendor>> {
+    return this.request('/api/vendors', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 
-  getById: (id: string) =>
-    api.get(`/analysis/anomalies/${id}`),
+  async getTopVendors(): Promise<ApiResponse<Vendor[]>> {
+    return this.request('/api/vendors/top');
+  }
 
-  resolve: (id: string, data: any) =>
-    api.patch(`/analysis/anomalies/${id}/resolve`, data),
+  // Anomaly endpoints
+  async analyzeProcurement(id: string): Promise<ApiResponse<Anomaly[]>> {
+    return this.request(`/api/analysis/anomaly/${id}`, { method: 'POST' });
+  }
 
-  getHighRisk: (minRiskScore = 70, limit = 50) =>
-    api.get(`/analysis/anomalies/high-risk?min_risk_score=${minRiskScore}&limit=${limit}`),
+  async getAnomalies(page = 1, perPage = 20): Promise<ApiResponse<PaginatedResponse<Anomaly>>> {
+    return this.request(`/api/analysis/anomalies?page=${page}&per_page=${perPage}`);
+  }
 
-  getProcurementAnomalies: (procurementId: string) =>
-    api.get(`/analysis/anomalies/procurement/${procurementId}`),
+  async getHighRiskAnomalies(): Promise<ApiResponse<Anomaly[]>> {
+    return this.request('/api/analysis/anomalies/high-risk');
+  }
 
-  getStatistics: () =>
-    api.get('/analysis/anomalies/statistics'),
+  async resolveAnomaly(id: string, notes: string): Promise<ApiResponse<Anomaly>> {
+    return this.request(`/api/analysis/anomalies/${id}/resolve`, {
+      method: 'PATCH',
+      body: JSON.stringify({ resolution_notes: notes }),
+    });
+  }
 
-  analyzeVendorPatterns: (vendorId: string) =>
-    api.post(`/analysis/vendor/${vendorId}/patterns`),
-};
+  // Document endpoints
+  async uploadDocument(file: File, procurementId: string): Promise<ApiResponse<{ document_id: string }>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('procurement_id', procurementId);
 
-// Vendor API
-export const vendorAPI = {
-  getPublic: (page = 1, limit = 20) =>
-    api.get(`/vendors/public?page=${page}&limit=${limit}`),
+    const token = localStorage.getItem('access_token');
+    const response = await fetch(`${API_BASE_URL}/api/documents/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
 
-  getAll: (params?: any) =>
-    api.get('/vendors', { params }),
+    return response.json();
+  }
 
-  getById: (id: string) =>
-    api.get(`/vendors/${id}`),
+  async downloadDocument(id: string): Promise<Blob> {
+    const token = localStorage.getItem('access_token');
+    const response = await fetch(`${API_BASE_URL}/api/documents/${id}/download`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
 
-  create: (data: any) =>
-    api.post('/vendors', data),
+    return response.blob();
+  }
+}
 
-  update: (id: string, data: any) =>
-    api.put(`/vendors/${id}`, data),
-
-  delete: (id: string) =>
-    api.delete(`/vendors/${id}`),
-
-  getTop: (limit = 10) =>
-    api.get(`/vendors/top?limit=${limit}`),
-};
+export const api = new ApiClient();

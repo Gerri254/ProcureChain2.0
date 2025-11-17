@@ -1,238 +1,90 @@
-import { format, formatDistance, parseISO } from 'date-fns';
-
-/**
- * Format currency values
- */
-export function formatCurrency(value: number, currency: string = 'KES'): string {
+export function formatCurrency(amount: number, currency = 'KES'): string {
   return new Intl.NumberFormat('en-KE', {
     style: 'currency',
-    currency: currency,
+    currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(value);
+  }).format(amount);
 }
 
-/**
- * Format large numbers with K, M, B suffixes
- */
-export function formatNumber(value: number): string {
-  if (value >= 1000000000) {
-    return `${(value / 1000000000).toFixed(1)}B`;
-  }
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`;
-  }
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`;
-  }
-  return value.toString();
+export function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
-/**
- * Format date strings
- */
-export function formatDate(dateString: string | undefined, formatStr: string = 'MMM dd, yyyy'): string {
-  if (!dateString) return 'N/A';
-  try {
-    return format(parseISO(dateString), formatStr);
-  } catch {
-    return 'Invalid date';
-  }
+export function formatDateTime(dateString: string): string {
+  return new Date(dateString).toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
-/**
- * Format relative time (e.g., "2 days ago")
- */
-export function formatRelativeTime(dateString: string | undefined): string {
-  if (!dateString) return 'N/A';
-  try {
-    return formatDistance(parseISO(dateString), new Date(), { addSuffix: true });
-  } catch {
-    return 'Invalid date';
-  }
-}
-
-/**
- * Get status badge color
- */
 export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
-    draft: 'badge-gray',
-    published: 'badge-info',
-    awarded: 'badge-success',
-    cancelled: 'badge-error',
-    completed: 'badge-success',
-    pending: 'badge-warning',
-    investigating: 'badge-info',
-    resolved: 'badge-success',
-    false_positive: 'badge-gray',
-    escalated: 'badge-error',
-    active: 'badge-success',
-    inactive: 'badge-gray',
-    suspended: 'badge-error',
+    draft: 'bg-gray-100 text-gray-700',
+    published: 'bg-blue-100 text-blue-700',
+    evaluation: 'bg-yellow-100 text-yellow-700',
+    awarded: 'bg-green-100 text-green-700',
+    completed: 'bg-gray-100 text-gray-600',
+    cancelled: 'bg-red-100 text-red-700',
+    compliant: 'bg-green-100 text-green-700',
+    non_compliant: 'bg-red-100 text-red-700',
+    pending: 'bg-yellow-100 text-yellow-700',
+    low: 'bg-blue-100 text-blue-700',
+    medium: 'bg-yellow-100 text-yellow-700',
+    high: 'bg-orange-100 text-orange-700',
+    critical: 'bg-red-100 text-red-700',
+    flagged: 'bg-red-100 text-red-700',
+    under_review: 'bg-yellow-100 text-yellow-700',
+    resolved: 'bg-green-100 text-green-700',
+    false_positive: 'bg-gray-100 text-gray-600',
   };
-  return colors[status.toLowerCase()] || 'badge-gray';
+
+  return colors[status] || 'bg-gray-100 text-gray-700';
 }
 
-/**
- * Get severity badge color
- */
-export function getSeverityColor(severity: string): string {
-  const colors: Record<string, string> = {
-    low: 'badge-info',
-    medium: 'badge-warning',
-    high: 'badge-error',
-    critical: 'badge-error',
-  };
-  return colors[severity.toLowerCase()] || 'badge-gray';
-}
-
-/**
- * Get risk score color
- */
-export function getRiskScoreColor(score: number): string {
-  if (score >= 80) return 'text-red-600';
-  if (score >= 60) return 'text-orange-600';
-  if (score >= 40) return 'text-yellow-600';
-  return 'text-green-600';
-}
-
-/**
- * Truncate text with ellipsis
- */
-export function truncateText(text: string, maxLength: number = 100): string {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength) + '...';
-}
-
-/**
- * Capitalize first letter
- */
-export function capitalize(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-/**
- * Convert snake_case to Title Case
- */
-export function snakeToTitle(str: string): string {
-  return str
-    .split('_')
-    .map(word => capitalize(word))
-    .join(' ');
-}
-
-/**
- * Download file from blob
- */
-export function downloadFile(blob: Blob, filename: string): void {
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  window.URL.revokeObjectURL(url);
-}
-
-/**
- * Check if user has permission
- */
-export function hasPermission(user: any, permission: string): boolean {
-  if (!user) return false;
-  return user.permissions?.includes(permission) || false;
-}
-
-/**
- * Check if user has role
- */
-export function hasRole(user: any, roles: string | string[]): boolean {
-  if (!user) return false;
-  const roleArray = Array.isArray(roles) ? roles : [roles];
-  return roleArray.includes(user.role);
-}
-
-/**
- * Get category display name
- */
-export function getCategoryName(category: string): string {
-  const names: Record<string, string> = {
-    infrastructure: 'Infrastructure',
-    supplies: 'Supplies',
-    services: 'Services',
-    consultancy: 'Consultancy',
-    works: 'Works',
+export function getCategoryLabel(category: string): string {
+  const labels: Record<string, string> = {
     goods: 'Goods',
-    equipment: 'Equipment',
-    other: 'Other',
+    services: 'Services',
+    works: 'Works',
+    consultancy: 'Consultancy',
+    supplies: 'Supplies',
   };
-  return names[category] || category;
+
+  return labels[category] || category;
 }
 
-/**
- * Validate email
- */
-export function isValidEmail(email: string): boolean {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
-}
-
-/**
- * Generate random color for charts
- */
-export function generateColor(index: number): string {
-  const colors = [
-    'hsl(210, 70%, 55%)',
-    'hsl(142, 70%, 45%)',
-    'hsl(38, 92%, 50%)',
-    'hsl(0, 84%, 60%)',
-    'hsl(199, 89%, 48%)',
-    'hsl(280, 70%, 55%)',
-    'hsl(45, 100%, 51%)',
-    'hsl(160, 70%, 45%)',
-  ];
-  return colors[index % colors.length];
-}
-
-/**
- * Calculate percentage
- */
-export function calculatePercentage(value: number, total: number): number {
-  if (total === 0) return 0;
-  return Math.round((value / total) * 100);
-}
-
-/**
- * Debounce function
- */
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
-  return function executedFunction(...args: Parameters<T>) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
+export function getCategoryColor(category: string): string {
+  const colors: Record<string, string> = {
+    goods: 'bg-blue-100 text-blue-700',
+    services: 'bg-purple-100 text-purple-700',
+    works: 'bg-orange-100 text-orange-700',
+    consultancy: 'bg-green-100 text-green-700',
+    supplies: 'bg-gray-100 text-gray-700',
   };
+
+  return colors[category] || 'bg-gray-100 text-gray-700';
 }
 
-/**
- * Handle API error
- */
-export function getErrorMessage(error: any): string {
-  if (error.response?.data?.error) {
-    return error.response.data.error;
-  }
-  if (error.response?.data?.message) {
-    return error.response.data.message;
-  }
-  if (error.message) {
-    return error.message;
-  }
-  return 'An unexpected error occurred';
+export function getRiskBadge(score: number): { label: string; color: string } {
+  if (score >= 75) return { label: 'Critical', color: 'bg-red-100 text-red-700' };
+  if (score >= 50) return { label: 'High', color: 'bg-orange-100 text-orange-700' };
+  if (score >= 25) return { label: 'Medium', color: 'bg-yellow-100 text-yellow-700' };
+  return { label: 'Low', color: 'bg-blue-100 text-blue-700' };
+}
+
+export function truncate(text: string, length: number): string {
+  if (text.length <= length) return text;
+  return text.slice(0, length) + '...';
+}
+
+export function cn(...classes: (string | undefined | false)[]): string {
+  return classes.filter(Boolean).join(' ');
 }

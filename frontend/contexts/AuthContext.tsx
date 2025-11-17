@@ -1,17 +1,24 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '@/lib/api';
-import { User } from '@/types';
-import toast from 'react-hot-toast';
+import { api } from '@/lib/api';
+import type { User } from '@/types';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  register: (data: any) => Promise<void>;
-  updateUser: (user: User) => void;
+  register: (data: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
+  isAuthenticated: boolean;
+}
+
+interface RegisterData {
+  email: string;
+  password: string;
+  full_name: string;
+  department?: string;
+  phone?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,104 +28,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on mount
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        fetchCurrentUser();
-      } else {
-        setLoading(false);
+    // Check if user is stored in localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
       }
     }
+    setLoading(false);
   }, []);
 
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await authAPI.getCurrentUser();
-      if (response.data.success) {
-        setUser(response.data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch current user:', error);
-      localStorage.removeItem('access_token');
-    } finally {
-      setLoading(false);
+  const login = async (email: string, password: string) => {
+    const response = await api.login(email, password);
+    if (response.success && response.data) {
+      setUser(response.data.user);
+    } else {
+      throw new Error(response.error || 'Login failed');
     }
   };
 
-  const login = async (email: string, password: string) => {
-    try {
-      const response = await authAPI.login(email, password);
-
-      if (response.data.success) {
-        const { access_token, user } = response.data.data;
-        localStorage.setItem('access_token', access_token);
-        setUser(user);
-        toast.success('Login successful!');
-      }
-    } catch (error: any) {
-      const message = error.response?.data?.error || 'Login failed';
-      toast.error(message);
-      throw error;
+  const register = async (data: RegisterData) => {
+    const response = await api.register(data);
+    if (response.success) {
+      // Auto-login after registration
+      await login(data.email, data.password);
+    } else {
+      throw new Error(response.error || 'Registration failed');
     }
   };
 
   const logout = async () => {
-    try {
-      await authAPI.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('access_token');
-      setUser(null);
-      toast.success('Logged out successfully');
-      if (typeof window !== 'undefined') {
-        window.location.href = '/';
-      }
-    }
-  };
-
-  const register = async (data: any) => {
-    try {
-      const response = await authAPI.register(data);
-
-      if (response.data.success) {
-        const { access_token, user } = response.data.data;
-        localStorage.setItem('access_token', access_token);
-        setUser(user);
-        toast.success('Registration successful!');
-      }
-    } catch (error: any) {
-      const message = error.response?.data?.error || 'Registration failed';
-      toast.error(message);
-      throw error;
-    }
-  };
-
-  const updateUser = (updatedUser: User) => {
-    setUser(updatedUser);
+    // Clear user data from localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    // Clear user state
+    setUser(null);
   };
 
   const value = {
     user,
     loading,
     login,
-    logout,
     register,
-    updateUser,
+    logout,
+    isAuthenticated: !!user,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }

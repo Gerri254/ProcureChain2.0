@@ -1,200 +1,104 @@
-// User types
 export interface User {
   _id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'procurement_officer' | 'auditor' | 'public';
+  role: 'admin' | 'government_official' | 'auditor' | 'public';
   department?: string;
-  permissions: string[];
+  phone?: string;
   status: 'active' | 'inactive' | 'suspended';
   created_at: string;
   last_login?: string;
 }
 
-// Procurement types
 export interface Procurement {
   _id: string;
-  tender_number?: string;
+  tender_number: string;
   title: string;
   description: string;
-  category: 'infrastructure' | 'supplies' | 'services' | 'consultancy' | 'works' | 'goods' | 'equipment' | 'other';
+  category: 'goods' | 'services' | 'works' | 'consultancy' | 'supplies';
   estimated_value: number;
   currency: string;
-  status: 'draft' | 'published' | 'awarded' | 'cancelled' | 'completed';
+  status: 'draft' | 'published' | 'evaluation' | 'awarded' | 'completed' | 'cancelled';
   published_date?: string;
-  deadline?: string;
-  eligibility_criteria?: string[];
-  evaluation_criteria?: string[];
-  required_documents?: string[];
-  contact_info?: {
-    department: string;
-    email: string;
-    phone: string;
-  };
-  awarded_vendor_id?: string;
-  awarded_amount?: number;
+  closing_date?: string;
+  department: string;
+  created_by: string;
+  vendor_id?: string;
+  awarded_value?: number;
   awarded_date?: string;
-  documents?: ProcurementDocument[];
-  metadata?: {
-    ai_analyzed: boolean;
-    ai_analysis_date?: string;
-    risk_score: number;
-    has_anomalies: boolean;
+  documents: string[];
+  ai_metadata?: {
+    summary?: string;
+    key_requirements?: string[];
+    risk_level?: 'low' | 'medium' | 'high';
   };
   created_at: string;
   updated_at: string;
-  created_by?: string;
 }
 
-export interface ProcurementDocument {
-  file_id: string;
-  file_name: string;
-  file_type: string;
-  uploaded_at: string;
-}
-
-// Vendor types
 export interface Vendor {
   _id: string;
-  name: string;
-  registration_number: string;
-  tax_compliance_status: 'compliant' | 'non-compliant' | 'pending' | 'exempt';
-  contact: {
-    email: string;
-    phone: string;
-    address: string;
-    website?: string;
-  };
-  business_info?: {
-    category: string;
-    established_date?: string;
-    num_employees: number;
-  };
-  contract_history: ContractHistory[];
-  performance_metrics: {
-    total_contracts: number;
-    total_value: number;
-    completion_rate: number;
-    average_rating: number;
-  };
-  metadata: {
-    verified: boolean;
-    verification_date?: string;
-    risk_score: number;
-    blacklisted: boolean;
-  };
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ContractHistory {
-  procurement_id: string;
-  amount: number;
-  date_awarded: string;
-  status: string;
-  completion_date?: string;
-  rating?: number;
-  notes?: string;
-}
-
-// Anomaly types
-export interface Anomaly {
-  _id: string;
-  procurement_id: string;
-  flag_type: 'price_anomaly' | 'vendor_pattern' | 'timeline_issue' | 'missing_info' | 'compliance_issue' | 'document_inconsistency' | 'frequency_anomaly';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  risk_score: number;
-  description: string;
-  ai_reasoning: string;
-  details?: {
-    detected_pattern: string;
-    expected_value?: any;
-    actual_value?: any;
-    deviation_percentage: number;
-    comparison_metrics?: any;
-  };
-  status: 'pending' | 'investigating' | 'resolved' | 'false_positive' | 'escalated';
-  flagged_at: string;
-  resolved_at?: string;
-  resolved_by?: string;
-  resolution_notes?: string;
-  notifications_sent: any[];
-}
-
-// API Response types
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
-  errors?: Record<string, string>;
-}
-
-export interface PaginatedResponse<T> {
-  results: T[];
-  total: number;
-  page: number;
-  limit: number;
-  pages: number;
-  has_next: boolean;
-  has_prev: boolean;
-}
-
-// Statistics types
-export interface ProcurementStatistics {
-  by_status: Record<string, {
-    count: number;
-    total_value: number;
-  }>;
-  total_procurements: number;
-  total_value: number;
-}
-
-export interface AnomalyStatistics {
-  by_status: Record<string, {
-    count: number;
-    avg_risk_score: number;
-  }>;
-  by_severity: Record<string, number>;
-  total_anomalies: number;
-}
-
-// Form types
-export interface LoginForm {
-  email: string;
-  password: string;
-}
-
-export interface RegisterForm {
-  email: string;
-  password: string;
-  full_name: string;
-}
-
-export interface ProcurementForm {
-  title: string;
-  description: string;
-  category: string;
-  estimated_value: number;
-  currency?: string;
-  tender_number?: string;
-  published_date?: string;
-  deadline?: string;
-  status?: string;
-}
-
-export interface VendorForm {
   name: string;
   registration_number: string;
   email: string;
   phone: string;
   address: string;
-  tax_compliance_status?: string;
+  city: string;
+  country: string;
+  category: string[];
+  tax_compliance_status: 'compliant' | 'non_compliant' | 'pending';
+  contracts: VendorContract[];
+  performance_score?: number;
+  risk_score?: number;
+  total_contracts: number;
+  total_value: number;
+  created_at: string;
 }
 
-// Chart data types
-export interface ChartData {
-  name: string;
-  value: number;
-  [key: string]: any;
+export interface VendorContract {
+  procurement_id: string;
+  tender_number: string;
+  awarded_date: string;
+  contract_value: number;
+  status: string;
+}
+
+export interface Anomaly {
+  _id: string;
+  procurement_id: string;
+  anomaly_type: 'price' | 'vendor' | 'timeline' | 'document' | 'pattern' | 'other';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  risk_score: number;
+  status: 'flagged' | 'under_review' | 'resolved' | 'false_positive';
+  flagged_at: string;
+  resolved_at?: string;
+}
+
+export interface Statistics {
+  total_procurements: number;
+  total_value: number;
+  by_status: Record<string, number>;
+  by_category: Record<string, number>;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  user: User;
+}
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  per_page: number;
+  pages: number;
 }

@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { ReportModal } from '@/components/procurement/ReportModal';
 import { CommentsSection } from '@/components/procurement/CommentsSection';
 import { EventTimeline } from '@/components/procurement/EventTimeline';
+import { ProcurementAIInsights } from '@/components/ai/ProcurementAIInsights';
 import type { Procurement } from '@/types';
 
 export default function ProcurementDetailPage() {
@@ -272,6 +273,12 @@ export default function ProcurementDetailPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* AI Insights */}
+          <ProcurementAIInsights
+            procurementId={procurement._id}
+            title={procurement.title}
+          />
 
           {/* Procurement Event Timeline */}
           <EventTimeline procurementId={procurement._id} />

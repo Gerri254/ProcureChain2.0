@@ -153,33 +153,6 @@ class ApiClient {
     return response;
   }
 
-  async getVendors(page = 1, perPage = 20): Promise<ApiResponse<PaginatedResponse<Vendor>>> {
-    const response = await this.request<any>(`/api/vendors?page=${page}&limit=${perPage}`);
-    // Map 'results' to 'items' for frontend consistency
-    if (response.data && response.data.results) {
-      response.data.items = response.data.results;
-    }
-    return response;
-  }
-
-  async getVendorById(id: string): Promise<ApiResponse<Vendor>> {
-    return this.request(`/api/vendors/${id}`);
-  }
-
-  async createVendor(data: Partial<Vendor>): Promise<ApiResponse<Vendor>> {
-    return this.request('/api/vendors', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updateVendor(id: string, data: Partial<Vendor>): Promise<ApiResponse<Vendor>> {
-    return this.request(`/api/vendors/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
   async getTopVendors(): Promise<ApiResponse<Vendor[]>> {
     return this.request('/api/vendors/top');
   }
@@ -506,6 +479,61 @@ class ApiClient {
 
   async getCommentCount(procurementId: string): Promise<ApiResponse<{ count: number }>> {
     return this.request(`/api/comments/procurement/${procurementId}/count`, {}, false);
+  }
+
+  // AI endpoints
+  async getAIStatus(): Promise<ApiResponse<{ available: boolean; message: string }>> {
+    return this.request('/api/ai/status', {}, false);
+  }
+
+  async explainProcurement(procurementId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/ai/explain-procurement/${procurementId}`, {}, false);
+  }
+
+  async analyzeAnomaly(anomalyId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/ai/analyze-anomaly/${anomalyId}`);
+  }
+
+  async verifyVendor(vendorData: any): Promise<ApiResponse<any>> {
+    return this.request('/api/ai/verify-vendor', {
+      method: 'POST',
+      body: JSON.stringify(vendorData),
+    });
+  }
+
+  async suggestProcurementImprovements(procurementId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/ai/suggest-improvements/${procurementId}`);
+  }
+
+  // Vendor endpoints
+  async createVendor(data: any): Promise<ApiResponse<any>> {
+    return this.request('/api/vendors', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getVendors(page = 1, perPage = 20, search = ''): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams({ page: page.toString(), limit: perPage.toString() });
+    if (search) params.append('search', search);
+    return this.request(`/api/vendors?${params.toString()}`);
+  }
+
+  async getVendor(vendorId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/vendors/${vendorId}`);
+  }
+
+  async updateVendor(vendorId: string, data: any): Promise<ApiResponse<any>> {
+    return this.request(`/api/vendors/${vendorId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteVendor(vendorId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/vendors/${vendorId}`, {
+      method: 'DELETE',
+    });
   }
 }
 

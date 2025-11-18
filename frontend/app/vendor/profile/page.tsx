@@ -56,7 +56,7 @@ export default function VendorProfilePage() {
         return;
       }
 
-      const response = await api.getVendorById(user.vendor_id);
+      const response = await api.getVendor(user.vendor_id);
 
       if (response.success && response.data) {
         setVendor(response.data);

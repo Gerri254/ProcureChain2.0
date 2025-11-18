@@ -161,7 +161,15 @@ export default function AdminVendorManagementPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Vendor Management</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Vendor Management</h1>
+        <Button
+          onClick={() => router.push('/admin/vendors/create')}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          + Add Vendor
+        </Button>
+      </div>
 
       {/* Statistics */}
       <div className="grid md:grid-cols-4 gap-4 mb-6">

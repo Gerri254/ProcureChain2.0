@@ -31,7 +31,7 @@ export default function Home() {
               <Button size="lg">Explore Procurements</Button>
             </Link>
             <Link href="/register">
-              <Button size="lg" variant="outline">
+              <Button size="lg" >
                 Get Started
               </Button>
             </Link>

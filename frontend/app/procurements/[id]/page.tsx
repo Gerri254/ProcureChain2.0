@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate, getStatusColor, getCategoryLabel, getCategoryColor } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -13,6 +14,8 @@ import type { Procurement } from '@/types';
 
 export default function ProcurementDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
   const [procurement, setProcurement] = useState<Procurement | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -85,6 +88,48 @@ export default function ProcurementDetailPage() {
                   <p className="text-gray-600 mt-1">{procurement.tender_number}</p>
                 </div>
               </div>
+
+              {/* Action Buttons */}
+              {isAuthenticated && (
+                <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-gray-200">
+                  {/* Vendor Actions */}
+                  {user?.role === 'vendor' && procurement.status === 'published' && (
+                    <>
+                      <Link href={`/bids/submit/${procurement._id}`}>
+                        <Button>
+                          Submit Bid
+                        </Button>
+                      </Link>
+                      <Button variant="secondary" onClick={() => router.push(`/bids/my-bids`)}>
+                        View My Bids
+                      </Button>
+                    </>
+                  )}
+
+                  {/* Admin/Official Actions */}
+                  {(user?.role === 'admin' || user?.role === 'government_official') && (
+                    <>
+                      {procurement.status === 'evaluation' && (
+                        <Link href={`/bids/evaluate/${procurement._id}`}>
+                          <Button>
+                            Evaluate Bids
+                          </Button>
+                        </Link>
+                      )}
+                      <Link href={`/compare?procurement=${procurement._id}`}>
+                        <Button variant="secondary">
+                          Compare Bids
+                        </Button>
+                      </Link>
+                    </>
+                  )}
+
+                  {/* Questions - Available to all authenticated users */}
+                  <Button variant="outline" onClick={() => alert('Questions feature coming soon!')}>
+                    Ask Question
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

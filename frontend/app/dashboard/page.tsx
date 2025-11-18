@@ -72,6 +72,61 @@ export default function DashboardPage() {
           <p className="text-gray-600">Welcome back, {user?.full_name}</p>
         </div>
 
+        {/* Quick Actions */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Link href="/procurements">
+                <Button className="w-full h-20 flex flex-col items-center justify-center gap-2">
+                  <ClipboardIcon size={24} />
+                  <span className="text-sm">View Procurements</span>
+                </Button>
+              </Link>
+              <Link href="/vendors">
+                <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="secondary">
+                  <DollarIcon size={24} />
+                  <span className="text-sm">Browse Vendors</span>
+                </Button>
+              </Link>
+              {(user?.role === 'admin' || user?.role === 'government_official' || user?.role === 'auditor') && (
+                <>
+                  <Link href="/analytics">
+                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="secondary">
+                      <MegaphoneIcon size={24} />
+                      <span className="text-sm">Analytics</span>
+                    </Button>
+                  </Link>
+                  <Link href="/compare">
+                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="secondary">
+                      <CheckCircleIcon size={24} />
+                      <span className="text-sm">Compare Bids</span>
+                    </Button>
+                  </Link>
+                </>
+              )}
+              {user?.role === 'vendor' && (
+                <>
+                  <Link href="/bids/my-bids">
+                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="secondary">
+                      <MegaphoneIcon size={24} />
+                      <span className="text-sm">My Bids</span>
+                    </Button>
+                  </Link>
+                  <Link href="/vendor/profile">
+                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="secondary">
+                      <CheckCircleIcon size={24} />
+                      <span className="text-sm">My Profile</span>
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Statistics Cards */}
         {stats && (
           <div className="grid md:grid-cols-4 gap-6 mb-8">

@@ -72,7 +72,7 @@ export default function VendorsPage() {
             {total > 12 && (
               <div className="flex justify-center gap-4 mt-8">
                 <Button
-                  variant="outline"
+                  
                   onClick={() => setPage(page - 1)}
                   disabled={page === 1}
                 >
@@ -82,7 +82,7 @@ export default function VendorsPage() {
                   Page {page} of {Math.ceil(total / 12)}
                 </span>
                 <Button
-                  variant="outline"
+                  
                   onClick={() => setPage(page + 1)}
                   disabled={page >= Math.ceil(total / 12)}
                 >
@@ -106,8 +106,8 @@ function VendorCard({ vendor }: { vendor: Vendor }) {
             <h3 className="font-semibold text-lg mb-1">{vendor.name}</h3>
             <p className="text-sm text-gray-600">{vendor.registration_number}</p>
           </div>
-          <Badge className={getStatusColor(vendor.tax_compliance_status)}>
-            {vendor.tax_compliance_status}
+          <Badge className={getStatusColor(vendor.tax_compliance_status || 'pending')}>
+            {vendor.tax_compliance_status || 'pending'}
           </Badge>
         </div>
 

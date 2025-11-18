@@ -2,7 +2,8 @@ export interface User {
   _id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'government_official' | 'auditor' | 'public';
+  role: 'admin' | 'government_official' | 'auditor' | 'public' | 'vendor';
+  vendor_id?: string;
   department?: string;
   phone?: string;
   status: 'active' | 'inactive' | 'suspended';
@@ -21,6 +22,7 @@ export interface Procurement {
   status: 'draft' | 'published' | 'evaluation' | 'awarded' | 'completed' | 'cancelled';
   published_date?: string;
   closing_date?: string;
+  submission_deadline?: string;
   department: string;
   created_by: string;
   vendor_id?: string;
@@ -38,7 +40,8 @@ export interface Procurement {
 
 export interface Vendor {
   _id: string;
-  name: string;
+  name?: string;
+  company_name?: string;
   registration_number: string;
   email: string;
   phone: string;
@@ -47,7 +50,12 @@ export interface Vendor {
   country?: string;
   category?: string[];
   business_category?: string; // Backend returns this as comma-separated string
-  tax_compliance_status: 'compliant' | 'non_compliant' | 'pending';
+  contact_person?: string;
+  contact_person_phone?: string;
+  website?: string;
+  description?: string;
+  status?: 'pending' | 'active' | 'suspended' | 'blacklisted';
+  tax_compliance_status?: 'compliant' | 'non_compliant' | 'pending';
   contracts?: VendorContract[];
   performance_score?: number;
   performance_metrics?: {
@@ -60,6 +68,7 @@ export interface Vendor {
   total_contracts?: number;
   total_value?: number;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface VendorContract {

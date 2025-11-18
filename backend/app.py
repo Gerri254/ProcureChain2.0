@@ -11,6 +11,9 @@ from routes.documents import documents_bp
 from routes.analysis import analysis_bp
 from routes.vendors import vendors_bp
 from routes.auth import auth_bp
+from routes.analytics import analytics_bp
+from routes.questions import questions_bp
+from routes.bids import bids_bp
 
 
 def create_app():
@@ -39,6 +42,9 @@ def create_app():
     app.register_blueprint(analysis_bp)
     app.register_blueprint(vendors_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
+    app.register_blueprint(questions_bp)
+    app.register_blueprint(bids_bp)
 
     # Health check endpoint
     @app.route('/health', methods=['GET'])
@@ -64,7 +70,10 @@ def create_app():
                 'documents': '/api/documents',
                 'analysis': '/api/analysis',
                 'vendors': '/api/vendors',
-                'auth': '/api/auth'
+                'auth': '/api/auth',
+                'analytics': '/api/analytics',
+                'questions': '/api/questions',
+                'bids': '/api/bids'
             },
             'documentation': 'See DESIGN_README.md for full API documentation'
         }), 200

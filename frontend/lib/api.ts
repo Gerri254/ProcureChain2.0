@@ -173,6 +173,13 @@ class ApiClient {
     });
   }
 
+  async updateVendor(id: string, data: Partial<Vendor>): Promise<ApiResponse<Vendor>> {
+    return this.request(`/api/vendors/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
   async getTopVendors(): Promise<ApiResponse<Vendor[]>> {
     return this.request('/api/vendors/top');
   }
@@ -195,6 +202,78 @@ class ApiClient {
       method: 'PATCH',
       body: JSON.stringify({ resolution_notes: notes }),
     });
+  }
+
+  // Analytics endpoints
+  async getSpendingTrends(days: number = 365): Promise<ApiResponse<any[]>> {
+    return this.request(`/api/analytics/trends?days=${days}`);
+  }
+
+  async getCategoryDistribution(): Promise<ApiResponse<any[]>> {
+    return this.request('/api/analytics/categories');
+  }
+
+  async getVendorPerformance(limit: number = 10): Promise<ApiResponse<any[]>> {
+    return this.request(`/api/analytics/vendors/performance?limit=${limit}`);
+  }
+
+  async getAnomalyBreakdown(): Promise<ApiResponse<any>> {
+    return this.request('/api/analytics/anomalies/breakdown');
+  }
+
+  async getKeyMetrics(): Promise<ApiResponse<any>> {
+    return this.request('/api/analytics/metrics');
+  }
+
+  async getDepartmentAnalysis(): Promise<ApiResponse<any[]>> {
+    return this.request('/api/analytics/departments');
+  }
+
+  async getStatusDistribution(): Promise<ApiResponse<any[]>> {
+    return this.request('/api/analytics/status/distribution');
+  }
+
+  async getProcurementTimeline(id: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/analytics/timeline/${id}`, {}, false);
+  }
+
+  // Question & Answer endpoints
+  async getProcurementQuestions(procurementId: string, includePending: boolean = true): Promise<ApiResponse<any[]>> {
+    return this.request(`/api/questions/procurement/${procurementId}?include_pending=${includePending}`, {}, false);
+  }
+
+  async createQuestion(procurementId: string, data: { question: string; asked_by?: string }): Promise<ApiResponse<any>> {
+    return this.request(`/api/questions/procurement/${procurementId}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, false);
+  }
+
+  async answerQuestion(questionId: string, answer: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/questions/${questionId}/answer`, {
+      method: 'POST',
+      body: JSON.stringify({ answer }),
+    });
+  }
+
+  async upvoteQuestion(questionId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/questions/${questionId}/upvote`, {
+      method: 'POST',
+    }, false);
+  }
+
+  async downvoteQuestion(questionId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/questions/${questionId}/downvote`, {
+      method: 'POST',
+    }, false);
+  }
+
+  async getPendingQuestions(limit: number = 50): Promise<ApiResponse<any[]>> {
+    return this.request(`/api/questions/pending?limit=${limit}`);
+  }
+
+  async getMyQuestions(): Promise<ApiResponse<any[]>> {
+    return this.request('/api/questions/user/my-questions');
   }
 
   // Document endpoints
@@ -224,6 +303,81 @@ class ApiClient {
     });
 
     return response.blob();
+  }
+
+  // Bid Management endpoints
+  async submitBid(procurementId: string, bidData: {
+    bid_amount: number;
+    currency?: string;
+    delivery_timeline: string;
+    technical_proposal_file_id?: string;
+    technical_proposal_file_name?: string;
+    financial_proposal_file_id?: string;
+    financial_proposal_file_name?: string;
+    bid_bond_file_id?: string;
+    bid_bond_file_name?: string;
+    bid_bond_amount?: number;
+    bid_validity_days?: number;
+    remarks?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request(`/api/bids/procurement/${procurementId}`, {
+      method: 'POST',
+      body: JSON.stringify(bidData),
+    });
+  }
+
+  async getProcurementBids(procurementId: string, includeDisqualified: boolean = false): Promise<ApiResponse<any[]>> {
+    return this.request(`/api/bids/procurement/${procurementId}?include_disqualified=${includeDisqualified}`);
+  }
+
+  async getMyBids(): Promise<ApiResponse<any[]>> {
+    return this.request('/api/bids/vendor/my-bids');
+  }
+
+  async getBidById(bidId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/bids/${bidId}`);
+  }
+
+  async evaluateBid(bidId: string, evaluation: {
+    technical_score: number;
+    financial_score: number;
+    comments?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request(`/api/bids/${bidId}/evaluate`, {
+      method: 'POST',
+      body: JSON.stringify(evaluation),
+    });
+  }
+
+  async calculateBidScores(procurementId: string): Promise<ApiResponse<any[]>> {
+    return this.request(`/api/bids/procurement/${procurementId}/calculate-scores`, {
+      method: 'POST',
+    });
+  }
+
+  async awardBid(bidId: string, awardData: {
+    awarded_amount?: number;
+    notes?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request(`/api/bids/${bidId}/award`, {
+      method: 'POST',
+      body: JSON.stringify(awardData),
+    });
+  }
+
+  async disqualifyBid(bidId: string, reason: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/bids/${bidId}/disqualify`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  async getBidStatistics(procurementId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/bids/procurement/${procurementId}/statistics`);
+  }
+
+  async getBidCount(procurementId: string): Promise<ApiResponse<{ bid_count: number }>> {
+    return this.request(`/api/bids/procurement/${procurementId}/count`, {}, false);
   }
 }
 

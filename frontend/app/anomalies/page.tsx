@@ -83,7 +83,7 @@ export default function AnomaliesPage() {
             {total > 20 && (
               <div className="flex justify-center gap-4 mt-8">
                 <Button
-                  variant="outline"
+                  
                   onClick={() => setPage(page - 1)}
                   disabled={page === 1}
                 >
@@ -93,7 +93,7 @@ export default function AnomaliesPage() {
                   Page {page} of {Math.ceil(total / 20)}
                 </span>
                 <Button
-                  variant="outline"
+                  
                   onClick={() => setPage(page + 1)}
                   disabled={page >= Math.ceil(total / 20)}
                 >

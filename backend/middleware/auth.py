@@ -170,6 +170,10 @@ def role_required(*allowed_roles):
         def admin_route():
             return {'message': 'Admin access granted'}
     """
+    # Flatten the roles if a list was passed
+    if len(allowed_roles) == 1 and isinstance(allowed_roles[0], list):
+        allowed_roles = tuple(allowed_roles[0])
+
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):

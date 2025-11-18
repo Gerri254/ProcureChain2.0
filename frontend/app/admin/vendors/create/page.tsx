@@ -65,8 +65,8 @@ export default function CreateVendorPage() {
 
       if (response.success && response.data) {
         alert('Vendor created successfully!');
-        const vendorId = response.data.vendor_id;
-        router.push(`/admin/vendors/${vendorId}`);
+        const vendorId = response.data.vendor_id || response.data._id;
+        router.push(`/vendors/${vendorId}`);
       } else {
         alert('Failed to create vendor: ' + (response.error || 'Unknown error'));
       }

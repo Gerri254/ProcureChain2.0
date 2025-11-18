@@ -520,7 +520,7 @@ class ApiClient {
   }
 
   async getVendor(vendorId: string): Promise<ApiResponse<any>> {
-    return this.request(`/api/vendors/${vendorId}`);
+    return this.request(`/api/vendors/${vendorId}`, {}, false);
   }
 
   async updateVendor(vendorId: string, data: any): Promise<ApiResponse<any>> {

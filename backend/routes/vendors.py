@@ -49,9 +49,9 @@ def list_vendors():
 
 
 @vendors_bp.route('/<vendor_id>', methods=['GET'])
-@token_required
+@optional_auth
 def get_vendor(vendor_id):
-    """Get specific vendor"""
+    """Get specific vendor (public endpoint)"""
     try:
         vendor = vendor_service.get_vendor_by_id(vendor_id)
 

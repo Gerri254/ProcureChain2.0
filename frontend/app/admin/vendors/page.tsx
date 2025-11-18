@@ -21,26 +21,30 @@ export default function AdminVendorManagementPage() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
-  const [actionModal, setActionModal] = useState<{
-    type: 'approve' | 'suspend' | 'activate' | 'delete' | null;
-    vendor: Vendor | null;
-  }>({ type: null, vendor: null });
 
   useEffect(() => {
+    // Wait for auth to initialize
+    if (isAuthenticated === undefined) {
+      return;
+    }
+
     if (!isAuthenticated) {
       router.push('/login?redirect=/admin/vendors');
       return;
     }
 
-    if (user?.role !== 'admin') {
-      setError('Only administrators can access this page');
+    if (!user) {
+      return; // Still loading user data
+    }
+
+    if (user.role !== 'admin' && user.role !== 'government_official') {
+      setError('Only administrators and government officials can access this page');
       setLoading(false);
       return;
     }
 
     fetchVendors();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, router]);
 
   useEffect(() => {
     filterVendors();
@@ -50,8 +54,19 @@ export default function AdminVendorManagementPage() {
     try {
       const response = await api.getVendors(1, 1000); // Get all vendors
       if (response.success && response.data) {
-        const vendorList = response.data.items || [];
-        setVendors(vendorList);
+        const vendorList = response.data.results || response.data.items || [];
+        // Map API fields to expected frontend fields
+        const mappedVendors = vendorList.map((v: any) => ({
+          ...v,
+          company_name: v.name || v.company_name,
+          email: v.contact?.email || v.email,
+          phone: v.contact?.phone || v.phone,
+          address: v.contact?.address || v.address,
+          city: v.business_info?.city || v.city || 'N/A',
+          country: v.business_info?.country || v.country || 'Kenya',
+          business_category: v.business_info?.category || v.business_category || v.category,
+        }));
+        setVendors(mappedVendors);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load vendors');
@@ -108,7 +123,6 @@ export default function AdminVendorManagementPage() {
 
       if (response?.success) {
         alert(`Vendor ${action}d successfully!`);
-        setActionModal({ type: null, vendor: null });
         fetchVendors();
       } else {
         alert(response?.error || `Failed to ${action} vendor`);
@@ -297,8 +311,7 @@ export default function AdminVendorManagementPage() {
                 <div className="flex gap-2 flex-wrap border-t pt-4">
                   <Button
                     size="sm"
-                    
-                    onClick={() => setSelectedVendor(vendor)}
+                    onClick={() => router.push(`/vendors/${vendor._id}`)}
                   >
                     View Details
                   </Button>
@@ -347,110 +360,6 @@ export default function AdminVendorManagementPage() {
           ))
         )}
       </div>
-
-      {/* Vendor Details Modal */}
-      {selectedVendor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>{selectedVendor.company_name}</CardTitle>
-                  <p className="text-sm text-gray-500">Reg: {selectedVendor.registration_number}</p>
-                </div>
-                <Badge className={getStatusColor(selectedVendor.status || "pending")}>
-                  {(selectedVendor.status || "pending").toUpperCase()}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Contact Information</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>Email: {selectedVendor.email}</div>
-                    <div>Phone: {selectedVendor.phone}</div>
-                    <div>Contact Person: {selectedVendor.contact_person}</div>
-                    <div>Contact Phone: {selectedVendor.contact_person_phone}</div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-2">Address</h4>
-                  <p className="text-sm">
-                    {selectedVendor.address}, {selectedVendor.city}, {selectedVendor.country}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-2">Business Categories</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {(selectedVendor.business_category || selectedVendor.category || '')
-                      .toString()
-                      .split(',')
-                      .map((cat: string) => cat.trim())
-                      .filter(Boolean)
-                      .map((cat: string, idx: number) => (
-                        <Badge key={idx} >{cat}</Badge>
-                      ))}
-                  </div>
-                </div>
-
-                {selectedVendor.description && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Description</h4>
-                    <p className="text-sm text-gray-700">{selectedVendor.description}</p>
-                  </div>
-                )}
-
-                {selectedVendor.website && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Website</h4>
-                    <a
-                      href={selectedVendor.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      {selectedVendor.website}
-                    </a>
-                  </div>
-                )}
-
-                {selectedVendor.performance_metrics && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Performance Metrics</h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium">Total Contracts:</span>{' '}
-                        {selectedVendor.performance_metrics.total_contracts || 0}
-                      </div>
-                      <div>
-                        <span className="font-medium">Total Value:</span> KES{' '}
-                        {(selectedVendor.performance_metrics.total_value || 0).toLocaleString()}
-                      </div>
-                      <div>
-                        <span className="font-medium">Completion Rate:</span>{' '}
-                        {selectedVendor.performance_metrics.completion_rate || 0}%
-                      </div>
-                      <div>
-                        <span className="font-medium">Average Rating:</span>{' '}
-                        {(selectedVendor.performance_metrics.average_rating || 0).toFixed(1)}/5
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-2 pt-4">
-                  <Button  onClick={() => setSelectedVendor(null)} className="flex-1">
-                    Close
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

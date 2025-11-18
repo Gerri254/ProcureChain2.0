@@ -425,6 +425,56 @@ class ApiClient {
     return this.request(`/api/reports/procurement/${procurementId}/count`, {}, false);
   }
 
+  // Procurement Event endpoints
+  async createProcurementEvent(procurementId: string, data: {
+    event_type: string;
+    title: string;
+    description: string;
+    scheduled_date?: string;
+    files?: any[];
+    findings?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request('/api/events', {
+      method: 'POST',
+      body: JSON.stringify({
+        procurement_id: procurementId,
+        ...data
+      }),
+    });
+  }
+
+  async getProcurementEvents(procurementId: string): Promise<ApiResponse<any[]>> {
+    return this.request(`/api/events/procurement/${procurementId}`, {}, false);
+  }
+
+  async getEvent(eventId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/events/${eventId}`, {}, false);
+  }
+
+  async updateEventStatus(eventId: string, data: {
+    status: string;
+    findings?: string;
+    files?: any[];
+  }): Promise<ApiResponse<any>> {
+    return this.request(`/api/events/${eventId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async addEventNote(eventId: string, text: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/events/${eventId}/notes`, {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    });
+  }
+
+  async deleteEvent(eventId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/events/${eventId}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Comment endpoints
   async createComment(data: {
     procurement_id: string;

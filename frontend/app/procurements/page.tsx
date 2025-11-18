@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate, getStatusColor, getCategoryLabel, getCategoryColor } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -12,6 +13,7 @@ import { Input } from '@/components/ui/Input';
 import type { Procurement } from '@/types';
 
 export default function ProcurementsPage() {
+  const { user, isAuthenticated } = useAuth();
   const [procurements, setProcurements] = useState<Procurement[]>([]);
   const [filteredProcurements, setFilteredProcurements] = useState<Procurement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +149,14 @@ export default function ProcurementsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Public Procurements</h1>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-4xl font-bold">Public Procurements</h1>
+            {isAuthenticated && (user?.role === 'admin' || user?.role === 'government_official') && (
+              <Link href="/procurements/create">
+                <Button>+ Create Procurement</Button>
+              </Link>
+            )}
+          </div>
           <p className="text-gray-600">
             Browse all public procurement opportunities and awarded contracts
           </p>

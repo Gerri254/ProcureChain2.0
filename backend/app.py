@@ -16,6 +16,7 @@ from routes.questions import questions_bp
 from routes.bids import bids_bp
 from routes.reports import reports_bp
 from routes.comments import comments_bp
+from routes.procurement_events import events_bp
 
 
 def create_app():
@@ -49,6 +50,7 @@ def create_app():
     app.register_blueprint(bids_bp)
     app.register_blueprint(reports_bp, url_prefix='/api/reports')
     app.register_blueprint(comments_bp, url_prefix='/api/comments')
+    app.register_blueprint(events_bp, url_prefix='/api/events')
 
     # Health check endpoint
     @app.route('/health', methods=['GET'])

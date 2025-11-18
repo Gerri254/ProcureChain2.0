@@ -26,6 +26,7 @@ export interface Procurement {
   department: string;
   created_by: string;
   vendor_id?: string;
+  awarded_vendor_id?: string;
   awarded_value?: number;
   awarded_date?: string;
   documents: string[];

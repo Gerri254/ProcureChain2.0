@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
@@ -8,6 +8,24 @@ import { Button } from '@/components/ui/Button';
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleDropdown = (name: string) => {
+    setOpenDropdown(openDropdown === name ? null : name);
+  };
 
   return (
     <header className="border-b border-gray-200 bg-white">
@@ -21,80 +39,202 @@ export function Header() {
               <span className="text-xl font-bold">ProcureChain</span>
             </Link>
 
-            <nav className="hidden md:flex space-x-6">
-              <Link
-                href="/procurements"
-                className="text-gray-600 hover:text-black transition-colors"
-              >
-                Procurements
-              </Link>
-              <Link
-                href="/vendors"
-                className="text-gray-600 hover:text-black transition-colors"
-              >
-                Vendors
-              </Link>
-              {isAuthenticated && (
-                <>
-                  <Link
-                    href="/dashboard"
-                    className="text-gray-600 hover:text-black transition-colors"
-                  >
-                    Dashboard
-                  </Link>
+            <nav className="hidden md:flex space-x-1" ref={dropdownRef}>
+              {/* Procurement Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => toggleDropdown('procurement')}
+                  className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
+                >
+                  Procurement
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {openDropdown === 'procurement' && (
+                  <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    <Link
+                      href="/procurements"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      onClick={() => setOpenDropdown(null)}
+                    >
+                      Browse Procurements
+                    </Link>
+                    <Link
+                      href="/dashboard"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      onClick={() => setOpenDropdown(null)}
+                    >
+                      Dashboard
+                    </Link>
+                    {isAuthenticated && (user?.role === 'admin' || user?.role === 'government_official') && (
+                      <Link
+                        href="/compare"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Compare Bids
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
 
-                  {/* Vendor-specific navigation */}
-                  {user?.role === 'vendor' && (
-                    <>
+              {/* Vendors Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => toggleDropdown('vendors')}
+                  className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
+                >
+                  Vendors
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {openDropdown === 'vendors' && (
+                  <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    <Link
+                      href="/vendors"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      onClick={() => setOpenDropdown(null)}
+                    >
+                      Browse Vendors
+                    </Link>
+                    {isAuthenticated && user?.role === 'vendor' && (
+                      <>
+                        <Link
+                          href="/vendor/profile"
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                          onClick={() => setOpenDropdown(null)}
+                        >
+                          My Profile
+                        </Link>
+                        <Link
+                          href="/vendor/register"
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                          onClick={() => setOpenDropdown(null)}
+                        >
+                          Register Vendor
+                        </Link>
+                      </>
+                    )}
+                    {isAuthenticated && user?.role === 'admin' && (
+                      <Link
+                        href="/admin/vendors"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Manage Vendors
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Bids Dropdown (Vendor only) */}
+              {isAuthenticated && user?.role === 'vendor' && (
+                <div className="relative">
+                  <button
+                    onClick={() => toggleDropdown('bids')}
+                    className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
+                  >
+                    Bids
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {openDropdown === 'bids' && (
+                    <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                       <Link
                         href="/bids/my-bids"
-                        className="text-gray-600 hover:text-black transition-colors"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
                       >
                         My Bids
                       </Link>
                       <Link
-                        href="/vendor/profile"
-                        className="text-gray-600 hover:text-black transition-colors"
+                        href="/procurements"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
                       >
-                        Profile
+                        Submit New Bid
                       </Link>
-                    </>
+                    </div>
                   )}
+                </div>
+              )}
 
-                  {/* Admin/Government/Auditor navigation */}
-                  {(user?.role === 'admin' || user?.role === 'government_official' || user?.role === 'auditor') && (
-                    <>
+              {/* Analytics Dropdown (Admin/Official/Auditor) */}
+              {isAuthenticated && (user?.role === 'admin' || user?.role === 'government_official' || user?.role === 'auditor') && (
+                <div className="relative">
+                  <button
+                    onClick={() => toggleDropdown('analytics')}
+                    className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
+                  >
+                    Analytics
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {openDropdown === 'analytics' && (
+                    <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                       <Link
                         href="/analytics"
-                        className="text-gray-600 hover:text-black transition-colors"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
                       >
-                        Analytics
-                      </Link>
-                      <Link
-                        href="/compare"
-                        className="text-gray-600 hover:text-black transition-colors"
-                      >
-                        Compare
+                        Overview
                       </Link>
                       <Link
                         href="/anomalies"
-                        className="text-gray-600 hover:text-black transition-colors"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
                       >
                         Anomalies
                       </Link>
-                    </>
+                      <Link
+                        href="/compare"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Compare Bids
+                      </Link>
+                    </div>
                   )}
+                </div>
+              )}
 
-                  {/* Admin-only navigation */}
-                  {user?.role === 'admin' && (
-                    <Link
-                      href="/admin/vendors"
-                      className="text-gray-600 hover:text-black transition-colors"
-                    >
-                      Manage Vendors
-                    </Link>
+              {/* Reports Dropdown (Admin/Official/Auditor for viewing) */}
+              {isAuthenticated && (user?.role === 'admin' || user?.role === 'government_official' || user?.role === 'auditor') && (
+                <div className="relative">
+                  <button
+                    onClick={() => toggleDropdown('reports')}
+                    className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
+                  >
+                    Reports
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {openDropdown === 'reports' && (
+                    <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                      <Link
+                        href="/reports"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        View All Reports
+                      </Link>
+                      <Link
+                        href="/reports/whistleblowing"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Whistleblowing Cases
+                      </Link>
+                    </div>
                   )}
-                </>
+                </div>
               )}
             </nav>
           </div>
@@ -149,89 +289,152 @@ export function Header() {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
-            <nav className="flex flex-col space-y-3">
-              <Link
-                href="/procurements"
-                className="text-gray-600 hover:text-black transition-colors px-2 py-1"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Procurements
-              </Link>
-              <Link
-                href="/vendors"
-                className="text-gray-600 hover:text-black transition-colors px-2 py-1"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Vendors
-              </Link>
-              {isAuthenticated && (
-                <>
+            <nav className="flex flex-col space-y-1">
+              {/* Procurement Section */}
+              <div className="px-2 py-1">
+                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  Procurement
+                </div>
+                <Link
+                  href="/procurements"
+                  className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Browse Procurements
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                {isAuthenticated && (user?.role === 'admin' || user?.role === 'government_official') && (
                   <Link
-                    href="/dashboard"
-                    className="text-gray-600 hover:text-black transition-colors px-2 py-1"
+                    href="/compare"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Dashboard
+                    Compare Bids
                   </Link>
+                )}
+              </div>
 
-                  {/* Vendor-specific mobile navigation */}
-                  {user?.role === 'vendor' && (
-                    <>
-                      <Link
-                        href="/bids/my-bids"
-                        className="text-gray-600 hover:text-black transition-colors px-2 py-1"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        My Bids
-                      </Link>
-                      <Link
-                        href="/vendor/profile"
-                        className="text-gray-600 hover:text-black transition-colors px-2 py-1"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Profile
-                      </Link>
-                    </>
-                  )}
-
-                  {/* Admin/Government/Auditor mobile navigation */}
-                  {(user?.role === 'admin' || user?.role === 'government_official' || user?.role === 'auditor') && (
-                    <>
-                      <Link
-                        href="/analytics"
-                        className="text-gray-600 hover:text-black transition-colors px-2 py-1"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Analytics
-                      </Link>
-                      <Link
-                        href="/compare"
-                        className="text-gray-600 hover:text-black transition-colors px-2 py-1"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Compare
-                      </Link>
-                      <Link
-                        href="/anomalies"
-                        className="text-gray-600 hover:text-black transition-colors px-2 py-1"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Anomalies
-                      </Link>
-                    </>
-                  )}
-
-                  {/* Admin-only mobile navigation */}
-                  {user?.role === 'admin' && (
+              {/* Vendors Section */}
+              <div className="px-2 py-1 mt-2">
+                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  Vendors
+                </div>
+                <Link
+                  href="/vendors"
+                  className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Browse Vendors
+                </Link>
+                {isAuthenticated && user?.role === 'vendor' && (
+                  <>
                     <Link
-                      href="/admin/vendors"
-                      className="text-gray-600 hover:text-black transition-colors px-2 py-1"
+                      href="/vendor/profile"
+                      className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Manage Vendors
+                      My Profile
                     </Link>
-                  )}
-                </>
+                    <Link
+                      href="/vendor/register"
+                      className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Register Vendor
+                    </Link>
+                  </>
+                )}
+                {isAuthenticated && user?.role === 'admin' && (
+                  <Link
+                    href="/admin/vendors"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Manage Vendors
+                  </Link>
+                )}
+              </div>
+
+              {/* Bids Section (Vendor only) */}
+              {isAuthenticated && user?.role === 'vendor' && (
+                <div className="px-2 py-1 mt-2">
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                    Bids
+                  </div>
+                  <Link
+                    href="/bids/my-bids"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    My Bids
+                  </Link>
+                  <Link
+                    href="/procurements"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Submit New Bid
+                  </Link>
+                </div>
+              )}
+
+              {/* Analytics Section (Admin/Official/Auditor) */}
+              {isAuthenticated && (user?.role === 'admin' || user?.role === 'government_official' || user?.role === 'auditor') && (
+                <div className="px-2 py-1 mt-2">
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                    Analytics
+                  </div>
+                  <Link
+                    href="/analytics"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Overview
+                  </Link>
+                  <Link
+                    href="/anomalies"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Anomalies
+                  </Link>
+                  <Link
+                    href="/compare"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Compare Bids
+                  </Link>
+                </div>
+              )}
+
+              {/* Reports Section (Admin/Official/Auditor) */}
+              {isAuthenticated && (user?.role === 'admin' || user?.role === 'government_official' || user?.role === 'auditor') && (
+                <div className="px-2 py-1 mt-2">
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                    Reports & Whistleblowing
+                  </div>
+                  <Link
+                    href="/reports"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    View All Reports
+                  </Link>
+                  <Link
+                    href="/reports/whistleblowing"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Whistleblowing Cases
+                  </Link>
+                </div>
               )}
             </nav>
           </div>

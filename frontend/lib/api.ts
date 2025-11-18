@@ -379,6 +379,84 @@ class ApiClient {
   async getBidCount(procurementId: string): Promise<ApiResponse<{ bid_count: number }>> {
     return this.request(`/api/bids/procurement/${procurementId}/count`, {}, false);
   }
+
+  // Report endpoints (whistleblowing)
+  async createReport(data: {
+    procurement_id: string;
+    report_type: string;
+    category: string;
+    title: string;
+    description: string;
+    evidence?: string[];
+    anonymous?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request('/api/reports', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getReports(page: number = 1, perPage: number = 20, filters?: any): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      per_page: perPage.toString(),
+      ...filters
+    });
+    return this.request(`/api/reports?${params.toString()}`);
+  }
+
+  async getReport(id: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/reports/${id}`);
+  }
+
+  async updateReportStatus(id: string, data: {
+    status: string;
+    severity?: string;
+    resolution?: string;
+    assigned_to?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request(`/api/reports/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getReportCount(procurementId: string): Promise<ApiResponse<{ count: number }>> {
+    return this.request(`/api/reports/procurement/${procurementId}/count`, {}, false);
+  }
+
+  // Comment endpoints
+  async createComment(data: {
+    procurement_id: string;
+    content: string;
+    parent_id?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request('/api/comments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getProcurementComments(procurementId: string, page: number = 1): Promise<ApiResponse<any>> {
+    return this.request(`/api/comments/procurement/${procurementId}?page=${page}`, {}, false);
+  }
+
+  async updateComment(id: string, content: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/comments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  async deleteComment(id: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/comments/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getCommentCount(procurementId: string): Promise<ApiResponse<{ count: number }>> {
+    return this.request(`/api/comments/procurement/${procurementId}/count`, {}, false);
+  }
 }
 
 export const api = new ApiClient();

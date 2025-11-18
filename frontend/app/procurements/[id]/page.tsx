@@ -10,6 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
+import { ReportModal } from '@/components/procurement/ReportModal';
+import { CommentsSection } from '@/components/procurement/CommentsSection';
 import type { Procurement } from '@/types';
 
 export default function ProcurementDetailPage() {
@@ -18,6 +20,7 @@ export default function ProcurementDetailPage() {
   const { user, isAuthenticated } = useAuth();
   const [procurement, setProcurement] = useState<Procurement | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -124,9 +127,12 @@ export default function ProcurementDetailPage() {
                     </>
                   )}
 
-                  {/* Questions - Available to all authenticated users */}
-                  <Button variant="outline" onClick={() => alert('Questions feature coming soon!')}>
-                    Ask Question
+                  {/* Report - Available to all authenticated users */}
+                  <Button
+                    variant="danger"
+                    onClick={() => setShowReportModal(true)}
+                  >
+                    🚨 Report Issue / Whistleblow
                   </Button>
                 </div>
               )}
@@ -224,7 +230,29 @@ export default function ProcurementDetailPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Comments Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Discussion & Comments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CommentsSection procurementId={procurement._id} />
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Report Modal */}
+        {showReportModal && (
+          <ReportModal
+            procurementId={procurement._id}
+            procurementTitle={procurement.title}
+            onClose={() => setShowReportModal(false)}
+            onSuccess={() => {
+              alert('Report submitted successfully. Thank you for helping maintain transparency.');
+            }}
+          />
+        )}
       </div>
     </div>
   );

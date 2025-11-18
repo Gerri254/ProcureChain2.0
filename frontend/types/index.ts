@@ -43,16 +43,23 @@ export interface Vendor {
   email: string;
   phone: string;
   address: string;
-  city: string;
-  country: string;
-  category: string[];
+  city?: string;
+  country?: string;
+  category?: string[];
+  business_category?: string; // Backend returns this as comma-separated string
   tax_compliance_status: 'compliant' | 'non_compliant' | 'pending';
-  contracts: VendorContract[];
+  contracts?: VendorContract[];
   performance_score?: number;
+  performance_metrics?: {
+    total_contracts: number;
+    total_value: number;
+    completion_rate: number;
+    average_rating: number;
+  };
   risk_score?: number;
-  total_contracts: number;
-  total_value: number;
-  created_at: string;
+  total_contracts?: number;
+  total_value?: number;
+  created_at?: string;
 }
 
 export interface VendorContract {

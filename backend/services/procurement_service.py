@@ -11,7 +11,7 @@ class ProcurementService:
     """Service for managing procurement records"""
 
     def __init__(self):
-        self.collection = db.procurement_records
+        self.collection = db.procurements
 
     def create_procurement(self, data: Dict, created_by: str = None) -> str:
         """

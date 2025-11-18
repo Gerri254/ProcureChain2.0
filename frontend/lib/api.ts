@@ -99,7 +99,12 @@ class ApiClient {
 
   // Procurement endpoints
   async getPublicProcurements(page = 1, perPage = 20): Promise<ApiResponse<PaginatedResponse<Procurement>>> {
-    return this.request(`/api/procurement/public?page=${page}&per_page=${perPage}`, {}, false);
+    const response = await this.request<any>(`/api/procurement/public?page=${page}&limit=${perPage}`, {}, false);
+    // Map 'results' to 'items' for frontend consistency
+    if (response.data && response.data.results) {
+      response.data.items = response.data.results;
+    }
+    return response;
   }
 
   async getProcurementById(id: string, isPublic = false): Promise<ApiResponse<Procurement>> {
@@ -108,7 +113,12 @@ class ApiClient {
   }
 
   async getProcurements(page = 1, perPage = 20): Promise<ApiResponse<PaginatedResponse<Procurement>>> {
-    return this.request(`/api/procurement?page=${page}&per_page=${perPage}`);
+    const response = await this.request<any>(`/api/procurement?page=${page}&limit=${perPage}`);
+    // Map 'results' to 'items' for frontend consistency
+    if (response.data && response.data.results) {
+      response.data.items = response.data.results;
+    }
+    return response;
   }
 
   async createProcurement(data: Partial<Procurement>): Promise<ApiResponse<Procurement>> {
@@ -135,11 +145,21 @@ class ApiClient {
 
   // Vendor endpoints
   async getPublicVendors(page = 1, perPage = 20): Promise<ApiResponse<PaginatedResponse<Vendor>>> {
-    return this.request(`/api/vendors/public?page=${page}&per_page=${perPage}`, {}, false);
+    const response = await this.request<any>(`/api/vendors/public?page=${page}&limit=${perPage}`, {}, false);
+    // Map 'results' to 'items' for frontend consistency
+    if (response.data && response.data.results) {
+      response.data.items = response.data.results;
+    }
+    return response;
   }
 
   async getVendors(page = 1, perPage = 20): Promise<ApiResponse<PaginatedResponse<Vendor>>> {
-    return this.request(`/api/vendors?page=${page}&per_page=${perPage}`);
+    const response = await this.request<any>(`/api/vendors?page=${page}&limit=${perPage}`);
+    // Map 'results' to 'items' for frontend consistency
+    if (response.data && response.data.results) {
+      response.data.items = response.data.results;
+    }
+    return response;
   }
 
   async getVendorById(id: string): Promise<ApiResponse<Vendor>> {

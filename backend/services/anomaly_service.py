@@ -13,7 +13,7 @@ class AnomalyService:
     """Service for anomaly detection and management"""
 
     def __init__(self):
-        self.collection = db.anomaly_flags
+        self.collection = db.anomalies
 
     def detect_and_create_anomalies(self, procurement_id: str) -> Dict:
         """

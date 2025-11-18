@@ -112,31 +112,47 @@ function VendorCard({ vendor }: { vendor: Vendor }) {
         </div>
 
         <div className="space-y-2 text-sm mb-4">
-          <div>
-            <span className="text-gray-600">Location:</span>
-            <span className="ml-2">{vendor.city}, {vendor.country}</span>
-          </div>
+          {vendor.city && vendor.country && (
+            <div>
+              <span className="text-gray-600">Location:</span>
+              <span className="ml-2">{vendor.city}, {vendor.country}</span>
+            </div>
+          )}
+
+          {vendor.address && (
+            <div>
+              <span className="text-gray-600">Address:</span>
+              <span className="ml-2">{vendor.address}</span>
+            </div>
+          )}
 
           <div>
             <span className="text-gray-600">Categories:</span>
             <div className="mt-1 flex flex-wrap gap-1">
-              {vendor.category.map((cat, idx) => (
-                <Badge key={idx} variant="default" className="text-xs">
-                  {cat}
-                </Badge>
-              ))}
+              {(vendor.business_category || vendor.category || '')
+                .toString()
+                .split(',')
+                .map((cat, idx) => cat.trim())
+                .filter(Boolean)
+                .map((cat, idx) => (
+                  <Badge key={idx} variant="default" className="text-xs">
+                    {cat}
+                  </Badge>
+                ))}
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 pt-4 border-t">
           <div>
-            <div className="text-2xl font-bold">{vendor.total_contracts}</div>
+            <div className="text-2xl font-bold">
+              {vendor.performance_metrics?.total_contracts || vendor.total_contracts || 0}
+            </div>
             <div className="text-xs text-gray-600">Contracts</div>
           </div>
           <div>
             <div className="text-2xl font-bold">
-              {formatCurrency(vendor.total_value).split('.')[0]}
+              {formatCurrency(vendor.performance_metrics?.total_value || vendor.total_value || 0).split('.')[0]}
             </div>
             <div className="text-xs text-gray-600">Total Value</div>
           </div>

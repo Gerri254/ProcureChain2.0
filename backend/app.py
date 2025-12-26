@@ -19,6 +19,10 @@ from routes.comments import comments_bp
 from routes.procurement_events import events_bp
 from routes.ai import ai_bp
 
+# New SkillChain routes
+from routes.skill_assessments import skill_assessment_bp
+from routes.user_profiles import user_profile_bp
+
 
 def create_app():
     """Application factory pattern"""
@@ -53,6 +57,10 @@ def create_app():
     app.register_blueprint(comments_bp, url_prefix='/api/comments')
     app.register_blueprint(events_bp, url_prefix='/api/events')
     app.register_blueprint(ai_bp, url_prefix='/api/ai')
+
+    # New SkillChain routes
+    app.register_blueprint(skill_assessment_bp)
+    app.register_blueprint(user_profile_bp)
 
     # Health check endpoint
     @app.route('/health', methods=['GET'])

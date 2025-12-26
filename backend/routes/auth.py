@@ -4,6 +4,7 @@ from config.database import db
 from models.user import UserModel
 from middleware.auth import AuthMiddleware, token_required
 from services.audit_service import audit_service
+from services.user_profile_service import user_profile_service
 from utils.response import success_response, error_response, unauthorized_response, validation_error_response
 from utils.validators import validate_required_fields, validate_email
 from utils.db_helpers import serialize_document
@@ -42,11 +43,50 @@ def register():
         # For now, all self-registered users get 'public' role
         data['role'] = 'public'
 
+        # Validate user_type for SkillChain (learner/employer/educator)
+        user_type = data.get('user_type', 'learner')
+        if user_type not in UserModel.VALID_USER_TYPES:
+            return validation_error_response({'user_type': f'Invalid user type. Must be one of: {UserModel.VALID_USER_TYPES}'})
+
+        data['user_type'] = user_type
+
         # Create user
         data['email'] = data['email'].lower()
         user_record = UserModel.create_schema(data)
         result = db.users.insert_one(user_record)
         user_id = str(result.inserted_id)
+
+        # Auto-create user profile based on user_type
+        try:
+            if user_type == 'learner':
+                profile_id = user_profile_service.create_learner_profile(user_id, {
+                    'full_name': data.get('full_name'),
+                    'email': data.get('email')
+                })
+            elif user_type == 'employer':
+                profile_id = user_profile_service.create_employer_profile(user_id, {
+                    'company_name': data.get('company_name', data.get('full_name')),
+                    'email': data.get('email')
+                })
+            elif user_type == 'educator':
+                # Educators get learner profile for now
+                profile_id = user_profile_service.create_learner_profile(user_id, {
+                    'full_name': data.get('full_name'),
+                    'email': data.get('email')
+                })
+            else:
+                profile_id = None
+
+            # Update user record with profile_id
+            if profile_id:
+                from bson import ObjectId
+                db.users.update_one(
+                    {'_id': ObjectId(user_id)},
+                    {'$set': {'profile_id': profile_id}}
+                )
+        except Exception as e:
+            print(f"Warning: Failed to create profile: {e}")
+            # Don't fail registration if profile creation fails
 
         # Log registration
         audit_service.log_authentication(

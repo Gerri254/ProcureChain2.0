@@ -3,6 +3,7 @@ export interface User {
   email: string;
   full_name: string;
   role: 'admin' | 'government_official' | 'auditor' | 'public' | 'vendor';
+  user_type?: 'learner' | 'employer' | 'educator' | 'admin';
   vendor_id?: string;
   department?: string;
   phone?: string;

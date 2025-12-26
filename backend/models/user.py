@@ -10,6 +10,9 @@ class UserModel:
     VALID_ROLES = ['admin', 'procurement_officer', 'auditor', 'public']
     VALID_STATUSES = ['active', 'inactive', 'suspended']
 
+    # SkillChain user types
+    VALID_USER_TYPES = ['learner', 'employer', 'educator', 'admin']
+
     @staticmethod
     def create_schema(data: Dict) -> Dict:
         """
@@ -31,6 +34,9 @@ class UserModel:
             'department': data.get('department', ''),
             'permissions': UserModel.get_role_permissions(data.get('role', 'public')),
             'status': data.get('status', 'active'),
+            # SkillChain fields
+            'user_type': data.get('user_type', 'learner'),  # learner, employer, educator, admin
+            'profile_id': None,  # Will be set after profile creation
             'last_login': None,
             'created_at': now,
             'updated_at': now

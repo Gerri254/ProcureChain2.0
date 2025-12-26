@@ -34,138 +34,147 @@ export function Header() {
           <div className="flex items-center space-x-8">
             <Link href="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">P</span>
+                <span className="text-white font-bold">S</span>
               </div>
-              <span className="text-xl font-bold">ProcureChain</span>
+              <span className="text-xl font-bold">SkillChain</span>
             </Link>
 
             <nav className="hidden md:flex space-x-1" ref={dropdownRef}>
-              {/* Procurement Dropdown */}
+              {/* Assessments Dropdown */}
               <div className="relative">
                 <button
-                  onClick={() => toggleDropdown('procurement')}
+                  onClick={() => toggleDropdown('assessments')}
                   className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
                 >
-                  Procurement
+                  Assessments
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                {openDropdown === 'procurement' && (
+                {openDropdown === 'assessments' && (
                   <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                     <Link
-                      href="/procurements"
+                      href="/assessments"
                       className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                       onClick={() => setOpenDropdown(null)}
                     >
-                      Browse Procurements
+                      Browse Challenges
                     </Link>
-                    <Link
-                      href="/dashboard"
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                      onClick={() => setOpenDropdown(null)}
-                    >
-                      Dashboard
-                    </Link>
-                    {isAuthenticated && (user?.role === 'admin' || user?.role === 'government_official') && (
-                      <Link
-                        href="/compare"
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        onClick={() => setOpenDropdown(null)}
-                      >
-                        Compare Bids
-                      </Link>
+                    {isAuthenticated && (
+                      <>
+                        <Link
+                          href="/assessments/my-assessments"
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                          onClick={() => setOpenDropdown(null)}
+                        >
+                          My Assessments
+                        </Link>
+                        <Link
+                          href="/assessments/my-skills"
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                          onClick={() => setOpenDropdown(null)}
+                        >
+                          My Skills
+                        </Link>
+                      </>
                     )}
+                    <Link
+                      href="/assessments/leaderboard"
+                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      onClick={() => setOpenDropdown(null)}
+                    >
+                      Leaderboard
+                    </Link>
                   </div>
                 )}
               </div>
 
-              {/* Vendors Dropdown */}
+              {/* Talent Dropdown */}
               <div className="relative">
                 <button
-                  onClick={() => toggleDropdown('vendors')}
+                  onClick={() => toggleDropdown('talent')}
                   className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
                 >
-                  Vendors
+                  Talent
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                {openDropdown === 'vendors' && (
+                {openDropdown === 'talent' && (
                   <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                     <Link
-                      href="/vendors"
+                      href="/profiles"
                       className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                       onClick={() => setOpenDropdown(null)}
                     >
-                      Browse Vendors
+                      Browse Talent
                     </Link>
-                    {isAuthenticated && user?.role === 'vendor' && (
+                    {isAuthenticated && user?.user_type === 'learner' && (
                       <>
                         <Link
-                          href="/vendor/profile"
+                          href="/profile/me"
                           className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                           onClick={() => setOpenDropdown(null)}
                         >
                           My Profile
                         </Link>
                         <Link
-                          href="/vendor/register"
+                          href="/jobs"
                           className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                           onClick={() => setOpenDropdown(null)}
                         >
-                          Register Vendor
+                          Find Jobs
                         </Link>
                       </>
                     )}
-                    {isAuthenticated && user?.role === 'admin' && (
+                    {isAuthenticated && user?.user_type === 'employer' && (
                       <Link
-                        href="/admin/vendors"
+                        href="/talent/search"
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                         onClick={() => setOpenDropdown(null)}
                       >
-                        Manage Vendors
+                        Search Candidates
                       </Link>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* Bids Dropdown (Vendor only) */}
-              {isAuthenticated && user?.role === 'vendor' && (
+              {/* Jobs Dropdown (Employer only) */}
+              {isAuthenticated && user?.user_type === 'employer' && (
                 <div className="relative">
                   <button
-                    onClick={() => toggleDropdown('bids')}
+                    onClick={() => toggleDropdown('jobs')}
                     className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
                   >
-                    Bids
+                    Jobs
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  {openDropdown === 'bids' && (
+                  {openDropdown === 'jobs' && (
                     <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                       <Link
-                        href="/bids/my-bids"
+                        href="/jobs/my-postings"
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                         onClick={() => setOpenDropdown(null)}
                       >
-                        My Bids
+                        My Job Postings
                       </Link>
                       <Link
-                        href="/procurements"
+                        href="/jobs/create"
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                         onClick={() => setOpenDropdown(null)}
                       >
-                        Submit New Bid
+                        Post New Job
                       </Link>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Analytics Dropdown (Admin/Official/Auditor) */}
-              {isAuthenticated && (user?.role === 'admin' || user?.role === 'government_official' || user?.role === 'auditor') && (
+              {/* Analytics Dropdown (Admin/Employer) */}
+              {isAuthenticated && (user?.role === 'admin' || user?.user_type === 'employer') && (
                 <div className="relative">
                   <button
                     onClick={() => toggleDropdown('analytics')}
@@ -183,54 +192,61 @@ export function Header() {
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                         onClick={() => setOpenDropdown(null)}
                       >
-                        Overview
+                        Platform Stats
                       </Link>
                       <Link
-                        href="/anomalies"
+                        href="/analytics/skills"
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                         onClick={() => setOpenDropdown(null)}
                       >
-                        Anomalies
+                        Skill Trends
                       </Link>
                       <Link
-                        href="/compare"
+                        href="/analytics/hiring"
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                         onClick={() => setOpenDropdown(null)}
                       >
-                        Compare Bids
+                        Hiring Insights
                       </Link>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Reports Dropdown (Admin/Official/Auditor for viewing) */}
-              {isAuthenticated && (user?.role === 'admin' || user?.role === 'government_official' || user?.role === 'auditor') && (
+              {/* Admin Dropdown (Admin only) */}
+              {isAuthenticated && user?.role === 'admin' && (
                 <div className="relative">
                   <button
-                    onClick={() => toggleDropdown('reports')}
+                    onClick={() => toggleDropdown('admin')}
                     className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
                   >
-                    Reports
+                    Admin
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  {openDropdown === 'reports' && (
+                  {openDropdown === 'admin' && (
                     <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                       <Link
-                        href="/reports"
+                        href="/admin/users"
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                         onClick={() => setOpenDropdown(null)}
                       >
-                        View All Reports
+                        Manage Users
                       </Link>
                       <Link
-                        href="/reports/whistleblowing"
+                        href="/admin/challenges"
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                         onClick={() => setOpenDropdown(null)}
                       >
-                        Whistleblowing Cases
+                        Manage Challenges
+                      </Link>
+                      <Link
+                        href="/admin/fraud-reports"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Fraud Reports
                       </Link>
                     </div>
                   )}
@@ -290,102 +306,111 @@ export function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
             <nav className="flex flex-col space-y-1">
-              {/* Procurement Section */}
+              {/* Assessments Section */}
               <div className="px-2 py-1">
                 <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                  Procurement
+                  Assessments
                 </div>
                 <Link
-                  href="/procurements"
+                  href="/assessments"
                   className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Browse Procurements
+                  Browse Challenges
                 </Link>
-                <Link
-                  href="/dashboard"
-                  className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
-                {isAuthenticated && (user?.role === 'admin' || user?.role === 'government_official') && (
-                  <Link
-                    href="/compare"
-                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Compare Bids
-                  </Link>
-                )}
-              </div>
-
-              {/* Vendors Section */}
-              <div className="px-2 py-1 mt-2">
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                  Vendors
-                </div>
-                <Link
-                  href="/vendors"
-                  className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Browse Vendors
-                </Link>
-                {isAuthenticated && user?.role === 'vendor' && (
+                {isAuthenticated && (
                   <>
                     <Link
-                      href="/vendor/profile"
+                      href="/assessments/my-assessments"
+                      className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      My Assessments
+                    </Link>
+                    <Link
+                      href="/assessments/my-skills"
+                      className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      My Skills
+                    </Link>
+                  </>
+                )}
+                <Link
+                  href="/assessments/leaderboard"
+                  className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Leaderboard
+                </Link>
+              </div>
+
+              {/* Talent Section */}
+              <div className="px-2 py-1 mt-2">
+                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  Talent
+                </div>
+                <Link
+                  href="/profiles"
+                  className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Browse Talent
+                </Link>
+                {isAuthenticated && user?.user_type === 'learner' && (
+                  <>
+                    <Link
+                      href="/profile/me"
                       className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       My Profile
                     </Link>
                     <Link
-                      href="/vendor/register"
+                      href="/jobs"
                       className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Register Vendor
+                      Find Jobs
                     </Link>
                   </>
                 )}
-                {isAuthenticated && user?.role === 'admin' && (
+                {isAuthenticated && user?.user_type === 'employer' && (
                   <Link
-                    href="/admin/vendors"
+                    href="/talent/search"
                     className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Manage Vendors
+                    Search Candidates
                   </Link>
                 )}
               </div>
 
-              {/* Bids Section (Vendor only) */}
-              {isAuthenticated && user?.role === 'vendor' && (
+              {/* Jobs Section (Employer only) */}
+              {isAuthenticated && user?.user_type === 'employer' && (
                 <div className="px-2 py-1 mt-2">
                   <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                    Bids
+                    Jobs
                   </div>
                   <Link
-                    href="/bids/my-bids"
+                    href="/jobs/my-postings"
                     className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    My Bids
+                    My Job Postings
                   </Link>
                   <Link
-                    href="/procurements"
+                    href="/jobs/create"
                     className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Submit New Bid
+                    Post New Job
                   </Link>
                 </div>
               )}
 
-              {/* Analytics Section (Admin/Official/Auditor) */}
-              {isAuthenticated && (user?.role === 'admin' || user?.role === 'government_official' || user?.role === 'auditor') && (
+              {/* Analytics Section (Admin/Employer) */}
+              {isAuthenticated && (user?.role === 'admin' || user?.user_type === 'employer') && (
                 <div className="px-2 py-1 mt-2">
                   <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
                     Analytics
@@ -395,44 +420,51 @@ export function Header() {
                     className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Overview
+                    Platform Stats
                   </Link>
                   <Link
-                    href="/anomalies"
+                    href="/analytics/skills"
                     className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Anomalies
+                    Skill Trends
                   </Link>
                   <Link
-                    href="/compare"
+                    href="/analytics/hiring"
                     className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Compare Bids
+                    Hiring Insights
                   </Link>
                 </div>
               )}
 
-              {/* Reports Section (Admin/Official/Auditor) */}
-              {isAuthenticated && (user?.role === 'admin' || user?.role === 'government_official' || user?.role === 'auditor') && (
+              {/* Admin Section */}
+              {isAuthenticated && user?.role === 'admin' && (
                 <div className="px-2 py-1 mt-2">
                   <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                    Reports & Whistleblowing
+                    Admin
                   </div>
                   <Link
-                    href="/reports"
+                    href="/admin/users"
                     className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    View All Reports
+                    Manage Users
                   </Link>
                   <Link
-                    href="/reports/whistleblowing"
+                    href="/admin/challenges"
                     className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Whistleblowing Cases
+                    Manage Challenges
+                  </Link>
+                  <Link
+                    href="/admin/fraud-reports"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Fraud Reports
                   </Link>
                 </div>
               )}

@@ -17,6 +17,8 @@ interface RegisterData {
   email: string;
   password: string;
   full_name: string;
+  user_type?: 'learner' | 'employer' | 'educator';
+  company_name?: string;
   department?: string;
   phone?: string;
 }

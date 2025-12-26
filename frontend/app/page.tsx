@@ -16,23 +16,23 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
         <div className="text-center">
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
-            Transparency in
+            Verify Your Skills.
             <br />
             <span className="bg-gradient-to-r from-black to-gray-600 bg-clip-text text-transparent">
-              Public Procurement
+              Get Hired.
             </span>
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
-            AI-powered platform for detecting anomalies and ensuring accountability
-            in government procurement processes
+            AI-powered skill verification platform. Take assessments, earn verified credentials,
+            and connect with employers looking for your skills.
           </p>
           <div className="flex gap-4 justify-center">
-            <Link href="/procurements">
-              <Button size="lg">Explore Procurements</Button>
+            <Link href="/assessments">
+              <Button size="lg">Take Assessment</Button>
             </Link>
             <Link href="/register">
               <Button size="lg" >
-                Get Started
+                Get Started Free
               </Button>
             </Link>
           </div>
@@ -42,38 +42,38 @@ export default function Home() {
       {/* Features Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h2 className="text-3xl font-bold text-center mb-12">
-          Built for Accountability
+          How SkillChain Works
         </h2>
         <div className="grid md:grid-cols-3 gap-8">
           <FeatureCard
             icon={<SearchIcon size={32} />}
-            title="AI-Powered Analysis"
-            description="Gemini AI automatically analyzes procurement documents and detects potential anomalies"
-          />
-          <FeatureCard
-            icon={<ChartIcon size={32} />}
-            title="Real-Time Monitoring"
-            description="Track all procurement activities with comprehensive dashboards and analytics"
+            title="Take Live Assessments"
+            description="Prove your skills with AI-monitored coding challenges. Get instant verification with detailed feedback."
           />
           <FeatureCard
             icon={<ShieldIcon size={32} />}
-            title="Vendor Verification"
-            description="Comprehensive vendor management with performance tracking and risk scoring"
+            title="Earn Verified Badges"
+            description="Receive cryptographically-secured credentials that employers can trust. No fake resumes."
+          />
+          <FeatureCard
+            icon={<ChartIcon size={32} />}
+            title="Get Matched to Jobs"
+            description="Employers find you based on verified skills, not just keywords. Skills speak louder than degrees."
           />
           <FeatureCard
             icon={<FileIcon size={32} />}
-            title="Document Management"
-            description="Secure document storage with AI-powered parsing and metadata extraction"
+            title="Portfolio Verification"
+            description="Connect GitHub and showcase real projects. AI verifies you actually wrote the code."
           />
           <FeatureCard
             icon={<AlertIcon size={32} />}
-            title="Anomaly Detection"
-            description="Automatically flag suspicious patterns in pricing, timelines, and vendor behavior"
+            title="Fraud Detection"
+            description="Advanced AI detects plagiarism and cheating. Only genuine skills get verified."
           />
           <FeatureCard
             icon={<LockIcon size={32} />}
-            title="Role-Based Access"
-            description="Secure authentication with granular permissions for different user roles"
+            title="Career Growth Tracking"
+            description="Track skill improvements over time. Get recommendations for high-demand skills to learn next."
           />
         </div>
       </section>
@@ -82,10 +82,10 @@ export default function Home() {
       <section className="bg-black text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8 text-center">
-            <StatCard number="100%" label="Transparent" />
+            <StatCard number="100%" label="Verified" />
             <StatCard number="AI" label="Powered" />
-            <StatCard number="24/7" label="Monitoring" />
-            <StatCard number="Real-time" label="Updates" />
+            <StatCard number="Free" label="Assessments" />
+            <StatCard number="Global" label="Opportunities" />
           </div>
         </div>
       </section>
@@ -93,13 +93,13 @@ export default function Home() {
       {/* CTA Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
         <h2 className="text-4xl font-bold mb-6">
-          Ready to enhance procurement transparency?
+          Ready to prove what you can do?
         </h2>
         <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-          Join ProcureChain today and leverage AI to ensure accountability in public spending
+          Join SkillChain today and turn your skills into verified credentials that get you hired.
         </p>
         <Link href="/register">
-          <Button size="lg">Start Free Trial</Button>
+          <Button size="lg">Start Verifying Skills - Free</Button>
         </Link>
       </section>
     </div>

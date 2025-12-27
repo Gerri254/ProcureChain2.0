@@ -746,6 +746,87 @@ class ApiClient {
   async getFullChallenge(challengeId: string): Promise<ApiResponse<any>> {
     return this.request(`/api/challenges/${challengeId}/full`);
   }
+
+  // ========== SkillChain Job Posting Endpoints ==========
+
+  // Browse job postings (public)
+  async getJobPostings(params?: {
+    skills?: string[];
+    location?: string;
+    employment_type?: string;
+    experience_level?: string;
+    location_type?: string;
+    min_salary?: number;
+    search?: string;
+    page?: number;
+    per_page?: number;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.skills && params.skills.length > 0) {
+      queryParams.append('skills', params.skills.join(','));
+    }
+    if (params?.location) queryParams.append('location', params.location);
+    if (params?.employment_type) queryParams.append('employment_type', params.employment_type);
+    if (params?.experience_level) queryParams.append('experience_level', params.experience_level);
+    if (params?.location_type) queryParams.append('location_type', params.location_type);
+    if (params?.min_salary) queryParams.append('min_salary', params.min_salary.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
+
+    const queryString = queryParams.toString();
+    return this.request(`/api/jobs${queryString ? `?${queryString}` : ''}`, {}, false);
+  }
+
+  // Get single job posting (public)
+  async getJobPosting(jobId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/jobs/${jobId}`, {}, false);
+  }
+
+  // Create job posting (employers only)
+  async createJobPosting(data: any): Promise<ApiResponse<any>> {
+    return this.request('/api/jobs', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Get my job postings (employers only)
+  async getMyJobPostings(params?: {
+    status?: string;
+    page?: number;
+    per_page?: number;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
+
+    const queryString = queryParams.toString();
+    return this.request(`/api/jobs/my-postings${queryString ? `?${queryString}` : ''}`);
+  }
+
+  // Update job posting (employers only)
+  async updateJobPosting(jobId: string, data: any): Promise<ApiResponse<any>> {
+    return this.request(`/api/jobs/${jobId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Delete job posting (employers only)
+  async deleteJobPosting(jobId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/jobs/${jobId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Get job posting statistics (employers only)
+  async getJobPostingStats(): Promise<ApiResponse<any>> {
+    return this.request('/api/jobs/stats');
+  }
 }
 
 export const api = new ApiClient();

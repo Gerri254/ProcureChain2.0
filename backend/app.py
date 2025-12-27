@@ -64,6 +64,7 @@ def create_app():
     app.register_blueprint(skill_assessment_bp)
     app.register_blueprint(user_profile_bp)
     app.register_blueprint(challenges_bp, url_prefix='/api/challenges')
+    app.register_blueprint(job_posting_bp, url_prefix='/api/jobs')
 
     # Health check endpoint
     @app.route('/health', methods=['GET'])

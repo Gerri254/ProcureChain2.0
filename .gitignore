@@ -1,0 +1,23 @@
+# Project Documentation (should not be committed)
+PROGRESS.md
+QUICK_START.md
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

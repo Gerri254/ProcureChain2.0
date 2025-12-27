@@ -110,19 +110,59 @@ export function Header() {
                       Browse Talent
                     </Link>
                     {isAuthenticated && user?.user_type === 'learner' && (
-                      <Link
-                        href="/profile/me"
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        onClick={() => setOpenDropdown(null)}
-                      >
-                        My Profile
-                      </Link>
+                      <>
+                        <Link
+                          href="/profile/me"
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                          onClick={() => setOpenDropdown(null)}
+                        >
+                          My Profile
+                        </Link>
+                        <Link
+                          href="/jobs"
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                          onClick={() => setOpenDropdown(null)}
+                        >
+                          Find Jobs
+                        </Link>
+                      </>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* Jobs Dropdown - Coming in Week 9 */}
+              {/* Jobs Dropdown (Employer only) */}
+              {isAuthenticated && user?.user_type === 'employer' && (
+                <div className="relative">
+                  <button
+                    onClick={() => toggleDropdown('jobs')}
+                    className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
+                  >
+                    Jobs
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {openDropdown === 'jobs' && (
+                    <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                      <Link
+                        href="/jobs/my-postings"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        My Job Postings
+                      </Link>
+                      <Link
+                        href="/jobs/create"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Post New Job
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Analytics Dropdown - Coming Soon */}
 
@@ -257,17 +297,47 @@ export function Header() {
                   Browse Talent
                 </Link>
                 {isAuthenticated && user?.user_type === 'learner' && (
-                  <Link
-                    href="/profile/me"
-                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    My Profile
-                  </Link>
+                  <>
+                    <Link
+                      href="/profile/me"
+                      className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      My Profile
+                    </Link>
+                    <Link
+                      href="/jobs"
+                      className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Find Jobs
+                    </Link>
+                  </>
                 )}
               </div>
 
-              {/* Jobs Section - Coming in Week 9 */}
+              {/* Jobs Section (Employer only) */}
+              {isAuthenticated && user?.user_type === 'employer' && (
+                <div className="px-2 py-1 mt-2">
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                    Jobs
+                  </div>
+                  <Link
+                    href="/jobs/my-postings"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    My Job Postings
+                  </Link>
+                  <Link
+                    href="/jobs/create"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Post New Job
+                  </Link>
+                </div>
+              )}
 
               {/* Analytics Section - Coming Soon */}
 

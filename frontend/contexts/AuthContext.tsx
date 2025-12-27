@@ -32,14 +32,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check if user is stored in localStorage
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    const token = localStorage.getItem('access_token');
+
+    console.log('[AuthContext] Initializing auth, token exists:', !!token);
+
+    if (storedUser && token) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        console.log('[AuthContext] Loaded user from localStorage:', parsedUser);
+        setUser(parsedUser);
+
+        // Fetch fresh user data from API to get latest profile info
+        api.getCurrentUser()
+          .then((response) => {
+            console.log('[AuthContext] Fresh user data from API:', response);
+            if (response.success && response.data) {
+              setUser(response.data);
+              localStorage.setItem('user', JSON.stringify(response.data));
+            }
+          })
+          .catch((error) => {
+            console.error('Error fetching current user:', error);
+            // If token is invalid, clear auth data
+            if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+              localStorage.removeItem('access_token');
+              localStorage.removeItem('refresh_token');
+              localStorage.removeItem('user');
+              setUser(null);
+            }
+          })
+          .finally(() => {
+            setLoading(false);
+          });
       } catch (error) {
         console.error('Error parsing stored user:', error);
+        setLoading(false);
       }
+    } else {
+      console.log('[AuthContext] No stored user or token');
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {

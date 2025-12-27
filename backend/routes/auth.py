@@ -103,6 +103,28 @@ def register():
         user_record['_id'] = result.inserted_id
         safe_user = UserModel.create_safe_view(serialize_document(user_record))
 
+        # Fetch and merge user profile data if available
+        try:
+            profile = user_profile_service.get_profile_by_user_id(user_id)
+            if profile:
+                # Merge profile data into user object
+                safe_user.update({
+                    'bio': profile.get('bio'),
+                    'location': profile.get('location'),
+                    'github_url': profile.get('github_url'),
+                    'linkedin_url': profile.get('linkedin_url'),
+                    'portfolio_url': profile.get('portfolio_url'),
+                    'experience_level': profile.get('experience_level'),
+                    'looking_for_job': profile.get('looking_for_job'),
+                    'company_name': profile.get('company_name'),
+                    'company_size': profile.get('company_size'),
+                    'industry': profile.get('industry'),
+                    'website': profile.get('website'),
+                })
+        except Exception as e:
+            print(f"Warning: Could not fetch profile data: {e}")
+            # Don't fail registration if profile fetch fails
+
         return success_response(
             {
                 'user': safe_user,
@@ -184,6 +206,28 @@ def login():
 
         # Get safe user view
         safe_user = UserModel.create_safe_view(serialize_document(user))
+
+        # Fetch and merge user profile data if available
+        try:
+            profile = user_profile_service.get_profile_by_user_id(user_id)
+            if profile:
+                # Merge profile data into user object
+                safe_user.update({
+                    'bio': profile.get('bio'),
+                    'location': profile.get('location'),
+                    'github_url': profile.get('github_url'),
+                    'linkedin_url': profile.get('linkedin_url'),
+                    'portfolio_url': profile.get('portfolio_url'),
+                    'experience_level': profile.get('experience_level'),
+                    'looking_for_job': profile.get('looking_for_job'),
+                    'company_name': profile.get('company_name'),
+                    'company_size': profile.get('company_size'),
+                    'industry': profile.get('industry'),
+                    'website': profile.get('website'),
+                })
+        except Exception as e:
+            print(f"Warning: Could not fetch profile data: {e}")
+            # Don't fail login if profile fetch fails
 
         return success_response(
             {
@@ -267,6 +311,28 @@ def get_current_user():
     try:
         user = g.current_user
         safe_user = UserModel.create_safe_view(serialize_document(user))
+
+        # Fetch and merge user profile data if available
+        try:
+            profile = user_profile_service.get_profile_by_user_id(g.user_id)
+            if profile:
+                # Merge profile data into user object
+                safe_user.update({
+                    'bio': profile.get('bio'),
+                    'location': profile.get('location'),
+                    'github_url': profile.get('github_url'),
+                    'linkedin_url': profile.get('linkedin_url'),
+                    'portfolio_url': profile.get('portfolio_url'),
+                    'experience_level': profile.get('experience_level'),
+                    'looking_for_job': profile.get('looking_for_job'),
+                    'company_name': profile.get('company_name'),
+                    'company_size': profile.get('company_size'),
+                    'industry': profile.get('industry'),
+                    'website': profile.get('website'),
+                })
+        except Exception as e:
+            print(f"Warning: Could not fetch profile data: {e}")
+            # Don't fail request if profile fetch fails
 
         return success_response(safe_user)
 

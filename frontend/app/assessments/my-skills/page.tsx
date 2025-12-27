@@ -37,7 +37,7 @@ export default function MySkillsPage() {
       const response = await api.getMySkills();
 
       if (response.success && response.data) {
-        setSkills(response.data || []);
+        setSkills(response.data.verified_skills || []);
       }
     } catch (error) {
       console.error('Error loading skills:', error);

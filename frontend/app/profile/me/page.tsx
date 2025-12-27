@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import api from '@/lib/api';
+import { api } from '@/lib/api';
 
 interface ProfileFormData {
   full_name: string;

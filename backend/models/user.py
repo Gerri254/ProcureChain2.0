@@ -146,7 +146,7 @@ class UserModel:
         """
         safe_fields = [
             '_id', 'email', 'full_name', 'role', 'department',
-            'permissions', 'status', 'created_at', 'last_login'
+            'permissions', 'status', 'created_at', 'last_login', 'user_type'
         ]
 
         return {key: user.get(key) for key in safe_fields if key in user}

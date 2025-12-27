@@ -265,3 +265,34 @@ def optional_auth(f):
         return f(*args, **kwargs)
 
     return decorated
+
+
+# Convenience decorator for admin/educator access
+def admin_required(f):
+    """
+    Decorator to require admin or educator role for route access
+    This is a convenience wrapper around role_required for SkillChain admin routes
+
+    Usage:
+        @app.route('/admin/challenges')
+        @token_required
+        @admin_required
+        def admin_route():
+            return {'message': 'Admin access granted'}
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        user = g.get('current_user')
+
+        if not user:
+            return unauthorized_response('Authentication required')
+
+        # Check if user_type is educator or employer (can manage platform)
+        user_type = user.get('user_type', user.get('role'))
+
+        if user_type not in ['educator', 'employer', 'admin']:
+            return forbidden_response('Admin access required. Only educators and employers can access this resource.')
+
+        return f(*args, **kwargs)
+
+    return decorated

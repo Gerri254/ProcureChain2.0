@@ -22,6 +22,8 @@ from routes.ai import ai_bp
 # New SkillChain routes
 from routes.skill_assessments import skill_assessment_bp
 from routes.user_profiles import user_profile_bp
+from routes.challenges import challenges_bp
+from routes.job_postings import job_posting_bp
 
 
 def create_app():
@@ -61,6 +63,7 @@ def create_app():
     # New SkillChain routes
     app.register_blueprint(skill_assessment_bp)
     app.register_blueprint(user_profile_bp)
+    app.register_blueprint(challenges_bp, url_prefix='/api/challenges')
 
     # Health check endpoint
     @app.route('/health', methods=['GET'])

@@ -5,6 +5,7 @@ from datetime import datetime
 from config.database import db
 from models.skill_assessment import SkillAssessmentModel
 from utils.db_helpers import serialize_document, get_object_id, paginate_query
+from services.gemini_code_analyzer import gemini_code_analyzer
 
 
 class SkillAssessmentService:
@@ -78,6 +79,80 @@ class SkillAssessmentService:
         )
 
         return result.modified_count > 0
+
+    def analyze_with_ai(self, assessment_id: str, challenge_data: Dict = None) -> bool:
+        """
+        Analyze submitted code using Gemini AI
+
+        Args:
+            assessment_id: Assessment ID
+            challenge_data: Optional challenge data (prompt, test_cases)
+
+        Returns:
+            True if analysis successful
+        """
+        # Get assessment
+        assessment = self.get_assessment_by_id(assessment_id)
+
+        if not assessment:
+            return False
+
+        # Update status to processing
+        self.collection.update_one(
+            {'_id': get_object_id(assessment_id)},
+            {'$set': {'status': 'processing'}}
+        )
+
+        try:
+            # Get challenge details if not provided
+            if not challenge_data:
+                challenge_data = {
+                    'prompt': 'Evaluate the submitted code',
+                    'test_cases': []
+                }
+
+            # Run AI analysis
+            ai_result = gemini_code_analyzer.analyze_code_submission(
+                code=assessment.get('code_submitted', ''),
+                skill=assessment.get('skill', ''),
+                difficulty_level=assessment.get('difficulty_level', 'beginner'),
+                challenge_prompt=challenge_data.get('prompt', ''),
+                test_cases=challenge_data.get('test_cases', [])
+            )
+
+            # Determine status based on score
+            overall_score = ai_result.get('overall_score', 0)
+            new_status = 'verified' if overall_score >= 70 else 'failed'
+
+            # Update assessment with AI analysis
+            update_data = {
+                'ai_analysis': ai_result,
+                'status': new_status,
+                'updated_at': datetime.utcnow()
+            }
+
+            if new_status == 'verified':
+                update_data['verified_date'] = datetime.utcnow()
+
+            result = self.collection.update_one(
+                {'_id': get_object_id(assessment_id)},
+                {'$set': update_data}
+            )
+
+            # If verified, sync with user profile
+            if result.modified_count > 0 and new_status == 'verified':
+                self._sync_with_user_profile(assessment_id, str(assessment.get('user_id')))
+
+            return result.modified_count > 0
+
+        except Exception as e:
+            print(f"Error in AI analysis: {e}")
+            # Mark as failed on error
+            self.collection.update_one(
+                {'_id': get_object_id(assessment_id)},
+                {'$set': {'status': 'failed', 'updated_at': datetime.utcnow()}}
+            )
+            return False
 
     def get_user_assessments(self, user_id: str, status: str = None) -> List[Dict]:
         """

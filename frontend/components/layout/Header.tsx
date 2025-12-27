@@ -110,111 +110,24 @@ export function Header() {
                       Browse Talent
                     </Link>
                     {isAuthenticated && user?.user_type === 'learner' && (
-                      <>
-                        <Link
-                          href="/profile/me"
-                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                          onClick={() => setOpenDropdown(null)}
-                        >
-                          My Profile
-                        </Link>
-                        <Link
-                          href="/jobs"
-                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                          onClick={() => setOpenDropdown(null)}
-                        >
-                          Find Jobs
-                        </Link>
-                      </>
-                    )}
-                    {isAuthenticated && user?.user_type === 'employer' && (
                       <Link
-                        href="/talent/search"
+                        href="/profile/me"
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                         onClick={() => setOpenDropdown(null)}
                       >
-                        Search Candidates
+                        My Profile
                       </Link>
                     )}
                   </div>
                 )}
               </div>
 
-              {/* Jobs Dropdown (Employer only) */}
-              {isAuthenticated && user?.user_type === 'employer' && (
-                <div className="relative">
-                  <button
-                    onClick={() => toggleDropdown('jobs')}
-                    className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
-                  >
-                    Jobs
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {openDropdown === 'jobs' && (
-                    <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                      <Link
-                        href="/jobs/my-postings"
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        onClick={() => setOpenDropdown(null)}
-                      >
-                        My Job Postings
-                      </Link>
-                      <Link
-                        href="/jobs/create"
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        onClick={() => setOpenDropdown(null)}
-                      >
-                        Post New Job
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Jobs Dropdown - Coming in Week 9 */}
 
-              {/* Analytics Dropdown (Admin/Employer) */}
-              {isAuthenticated && (user?.role === 'admin' || user?.user_type === 'employer') && (
-                <div className="relative">
-                  <button
-                    onClick={() => toggleDropdown('analytics')}
-                    className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
-                  >
-                    Analytics
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {openDropdown === 'analytics' && (
-                    <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                      <Link
-                        href="/analytics"
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        onClick={() => setOpenDropdown(null)}
-                      >
-                        Platform Stats
-                      </Link>
-                      <Link
-                        href="/analytics/skills"
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        onClick={() => setOpenDropdown(null)}
-                      >
-                        Skill Trends
-                      </Link>
-                      <Link
-                        href="/analytics/hiring"
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        onClick={() => setOpenDropdown(null)}
-                      >
-                        Hiring Insights
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Analytics Dropdown - Coming Soon */}
 
-              {/* Admin Dropdown (Admin only) */}
-              {isAuthenticated && user?.role === 'admin' && (
+              {/* Admin Dropdown (Educators and Employers) */}
+              {isAuthenticated && (user?.user_type === 'educator' || user?.user_type === 'employer') && (
                 <div className="relative">
                   <button
                     onClick={() => toggleDropdown('admin')}
@@ -228,25 +141,11 @@ export function Header() {
                   {openDropdown === 'admin' && (
                     <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                       <Link
-                        href="/admin/users"
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        onClick={() => setOpenDropdown(null)}
-                      >
-                        Manage Users
-                      </Link>
-                      <Link
                         href="/admin/challenges"
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
                         onClick={() => setOpenDropdown(null)}
                       >
                         Manage Challenges
-                      </Link>
-                      <Link
-                        href="/admin/fraud-reports"
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                        onClick={() => setOpenDropdown(null)}
-                      >
-                        Fraud Reports
                       </Link>
                     </div>
                   )}
@@ -358,113 +257,32 @@ export function Header() {
                   Browse Talent
                 </Link>
                 {isAuthenticated && user?.user_type === 'learner' && (
-                  <>
-                    <Link
-                      href="/profile/me"
-                      className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      My Profile
-                    </Link>
-                    <Link
-                      href="/jobs"
-                      className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Find Jobs
-                    </Link>
-                  </>
-                )}
-                {isAuthenticated && user?.user_type === 'employer' && (
                   <Link
-                    href="/talent/search"
+                    href="/profile/me"
                     className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Search Candidates
+                    My Profile
                   </Link>
                 )}
               </div>
 
-              {/* Jobs Section (Employer only) */}
-              {isAuthenticated && user?.user_type === 'employer' && (
-                <div className="px-2 py-1 mt-2">
-                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                    Jobs
-                  </div>
-                  <Link
-                    href="/jobs/my-postings"
-                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    My Job Postings
-                  </Link>
-                  <Link
-                    href="/jobs/create"
-                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Post New Job
-                  </Link>
-                </div>
-              )}
+              {/* Jobs Section - Coming in Week 9 */}
 
-              {/* Analytics Section (Admin/Employer) */}
-              {isAuthenticated && (user?.role === 'admin' || user?.user_type === 'employer') && (
-                <div className="px-2 py-1 mt-2">
-                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                    Analytics
-                  </div>
-                  <Link
-                    href="/analytics"
-                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Platform Stats
-                  </Link>
-                  <Link
-                    href="/analytics/skills"
-                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Skill Trends
-                  </Link>
-                  <Link
-                    href="/analytics/hiring"
-                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Hiring Insights
-                  </Link>
-                </div>
-              )}
+              {/* Analytics Section - Coming Soon */}
 
-              {/* Admin Section */}
-              {isAuthenticated && user?.role === 'admin' && (
+              {/* Admin Section (Educators and Employers) */}
+              {isAuthenticated && (user?.user_type === 'educator' || user?.user_type === 'employer') && (
                 <div className="px-2 py-1 mt-2">
                   <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
                     Admin
                   </div>
-                  <Link
-                    href="/admin/users"
-                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Manage Users
-                  </Link>
                   <Link
                     href="/admin/challenges"
                     className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Manage Challenges
-                  </Link>
-                  <Link
-                    href="/admin/fraud-reports"
-                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Fraud Reports
                   </Link>
                 </div>
               )}

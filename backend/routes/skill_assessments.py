@@ -49,7 +49,7 @@ def create_assessment():
         return error_response('Failed to create assessment', status_code=500)
 
 
-@skill_assessment_bp.route('/<assessment_id>', methods='GET'])
+@skill_assessment_bp.route('/<assessment_id>', methods=['GET'])
 @token_required
 def get_assessment(assessment_id):
     """Get specific assessment"""
@@ -109,8 +109,12 @@ def submit_assessment_code(assessment_id):
         if not success:
             return error_response('Failed to submit code')
 
+        # Trigger AI analysis (async in production, sync for now)
+        challenge_data = data.get('challenge_data', {})
+        skill_assessment_service.analyze_with_ai(assessment_id, challenge_data)
+
         return success_response(
-            message='Code submitted successfully. AI grading in progress...'
+            message='Code submitted successfully. AI is analyzing your code...'
         )
 
     except Exception as e:

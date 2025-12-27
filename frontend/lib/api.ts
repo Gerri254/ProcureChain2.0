@@ -535,6 +535,217 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // ========== SkillChain Assessment Endpoints ==========
+
+  // Create new assessment
+  async createAssessment(data: {
+    skill: string;
+    difficulty_level: string;
+    challenge_id?: string;
+  }): Promise<ApiResponse<{ assessment_id: string }>> {
+    return this.request('/api/assessments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Get specific assessment
+  async getAssessment(assessmentId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/assessments/${assessmentId}`);
+  }
+
+  // Submit code for assessment
+  async submitAssessmentCode(
+    assessmentId: string,
+    data: {
+      code_submitted: string;
+      time_taken_seconds?: number;
+      challenge_data?: {
+        prompt: string;
+        test_cases: Array<{ input: string; expected_output: string }>;
+      };
+    }
+  ): Promise<ApiResponse<any>> {
+    return this.request(`/api/assessments/${assessmentId}/submit`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Get user's assessments
+  async getMyAssessments(status?: string): Promise<ApiResponse<{
+    total: number;
+    assessments: any[];
+  }>> {
+    const queryParam = status ? `?status=${status}` : '';
+    return this.request(`/api/assessments/my-assessments${queryParam}`);
+  }
+
+  // Get user's verified skills
+  async getMySkills(): Promise<ApiResponse<any[]>> {
+    return this.request('/api/assessments/my-skills');
+  }
+
+  // Get skill statistics
+  async getSkillStatistics(skill: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/assessments/statistics/${skill}`);
+  }
+
+  // Get leaderboard
+  async getLeaderboard(skill?: string): Promise<ApiResponse<any[]>> {
+    const queryParam = skill ? `?skill=${skill}` : '';
+    return this.request(`/api/assessments/leaderboard${queryParam}`);
+  }
+
+  // Get all assessments (admin)
+  async getAllAssessments(page = 1, perPage = 20): Promise<ApiResponse<any>> {
+    return this.request(`/api/assessments?page=${page}&limit=${perPage}`);
+  }
+
+  // ========== SkillChain Profile Endpoints ==========
+
+  // Get my profile
+  async getMyProfile(): Promise<ApiResponse<any>> {
+    return this.request('/api/profiles/me');
+  }
+
+  // Update my profile
+  async updateMyProfile(data: any): Promise<ApiResponse<any>> {
+    return this.request('/api/profiles/me', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Get user profile (public)
+  async getUserProfile(userId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/profiles/${userId}`, {}, false);
+  }
+
+  // Get user's verified skills (public)
+  async getUserSkills(userId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/profiles/${userId}/skills`, {}, false);
+  }
+
+  // Search learners (employers only)
+  async searchLearners(params: {
+    skills?: string[];
+    min_score?: number;
+    experience_level?: string;
+    location?: string;
+    looking_for_job?: boolean;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const queryParams = new URLSearchParams();
+
+    if (params.skills) {
+      params.skills.forEach(skill => queryParams.append('skills', skill));
+    }
+    if (params.min_score) queryParams.append('min_score', params.min_score.toString());
+    if (params.experience_level) queryParams.append('experience_level', params.experience_level);
+    if (params.location) queryParams.append('location', params.location);
+    if (params.looking_for_job !== undefined) queryParams.append('looking_for_job', params.looking_for_job.toString());
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+
+    return this.request(`/api/profiles/search/learners?${queryParams.toString()}`);
+  }
+
+  // Get profile completeness
+  async getProfileCompleteness(): Promise<ApiResponse<any>> {
+    return this.request('/api/profiles/completeness');
+  }
+
+  // Get platform stats
+  async getPlatformStats(): Promise<ApiResponse<any>> {
+    return this.request('/api/profiles/stats', {}, false);
+  }
+
+  // ========== CHALLENGE ENDPOINTS ==========
+
+  // Get challenges with optional filters
+  async getChallenges(params?: {
+    skill?: string;
+    difficulty_level?: string;
+    challenge_type?: string;
+    page?: number;
+    per_page?: number;
+  }): Promise<ApiResponse<{
+    total: number;
+    page: number;
+    per_page: number;
+    total_pages: number;
+    challenges: any[];
+  }>> {
+    const queryParams = new URLSearchParams();
+    if (params?.skill) queryParams.append('skill', params.skill);
+    if (params?.difficulty_level) queryParams.append('difficulty_level', params.difficulty_level);
+    if (params?.challenge_type) queryParams.append('challenge_type', params.challenge_type);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
+
+    const query = queryParams.toString();
+    return this.request(`/api/challenges${query ? `?${query}` : ''}`, {}, false);
+  }
+
+  // Get single challenge by ID
+  async getChallenge(challengeId: string, includeAnswers = false): Promise<ApiResponse<any>> {
+    const query = includeAnswers ? '?include_answers=true' : '';
+    return this.request(`/api/challenges/${challengeId}${query}`, {}, false);
+  }
+
+  // Get random challenge for assessment
+  async getRandomChallenge(skill: string, difficulty_level: string): Promise<ApiResponse<any>> {
+    return this.request(
+      `/api/challenges/random?skill=${skill}&difficulty_level=${difficulty_level}`,
+      {},
+      false
+    );
+  }
+
+  // Search challenges
+  async searchChallenges(searchTerm: string, page = 1, perPage = 20): Promise<ApiResponse<any>> {
+    return this.request(
+      `/api/challenges/search?q=${encodeURIComponent(searchTerm)}&page=${page}&per_page=${perPage}`,
+      {},
+      false
+    );
+  }
+
+  // Get challenge statistics
+  async getChallengeStats(): Promise<ApiResponse<any>> {
+    return this.request('/api/challenges/stats', {}, false);
+  }
+
+  // Create challenge (admin only)
+  async createChallenge(data: any): Promise<ApiResponse<{ challenge_id: string }>> {
+    return this.request('/api/challenges', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  }
+
+  // Update challenge (admin only)
+  async updateChallenge(challengeId: string, data: any): Promise<ApiResponse<any>> {
+    return this.request(`/api/challenges/${challengeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  }
+
+  // Delete challenge (admin only)
+  async deleteChallenge(challengeId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/challenges/${challengeId}`, {
+      method: 'DELETE'
+    });
+  }
+
+  // Get full challenge with answers (admin only)
+  async getFullChallenge(challengeId: string): Promise<ApiResponse<any>> {
+    return this.request(`/api/challenges/${challengeId}/full`);
+  }
 }
 
 export const api = new ApiClient();

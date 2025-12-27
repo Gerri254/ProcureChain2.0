@@ -2,27 +2,50 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import {
+  UserCircle,
+  TrendingUp,
+  Award,
+  Briefcase,
+  Search,
+  Bell,
+  Settings,
+  Grid3x3,
+  List,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  ExternalLink,
+  BookOpen,
+  BarChart3,
+  Moon,
+  Sun,
+} from 'lucide-react';
 
 interface Assessment {
   _id: string;
-  skill: string;
-  score: number;
-  assessment_date: string;
+  challenge_id: string;
+  challenge_title?: string;
+  skill_assessed?: string;
+  score?: number;
   status: string;
+  submitted_at?: string;
+  created_at?: string;
 }
 
 interface Skill {
-  skill: string;
+  _id: string;
+  skill_name: string;
+  proficiency_level: string;
   score: number;
-  verified_date: string;
-  expires_at: string;
-  is_expired: boolean;
+  earned_at: string;
+  expires_at?: string;
+  status: string;
 }
 
 interface JobPosting {
@@ -30,738 +53,1264 @@ interface JobPosting {
   title: string;
   company_name: string;
   location: string;
-  skills_required: string[];
-  posted_at: string;
+  employment_type: string;
+  required_skills: string[];
+  status: string;
+  created_at: string;
 }
 
-export default function DashboardPage() {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
+type ViewMode = 'grid' | 'list';
 
-  // Learner state
+export default function DashboardPage() {
+  const router = useRouter();
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
-  const [recommendedJobs, setRecommendedJobs] = useState<JobPosting[]>([]);
-
-  // Employer state
-  const [jobStats, setJobStats] = useState<any>(null);
-  const [myJobs, setMyJobs] = useState<JobPosting[]>([]);
-
-  // Educator state
-  const [challengeStats, setChallengeStats] = useState<any>(null);
+  const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [darkMode, setDarkMode] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'skills' | 'assessments' | 'jobs'>('all');
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/login');
-    } else if (isAuthenticated) {
-      loadDashboardData();
     }
-  }, [isAuthenticated, authLoading, router]);
+  }, [authLoading, isAuthenticated, router]);
 
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
-      console.log('[Dashboard] Loading data for user:', user);
-      console.log('[Dashboard] User type:', user?.user_type);
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) return;
 
-      if (user?.user_type === 'learner') {
-        console.log('[Dashboard] Loading learner data...');
-        // Load learner dashboard data
-        const [assessmentsRes, skillsRes, jobsRes] = await Promise.all([
-          api.getMyAssessments(),
-          api.getMySkills(),
-          api.getJobPostings({ page: 1, per_page: 3 }),
-        ]);
+      try {
+        setLoading(true);
 
-        console.log('[Dashboard] Assessments response:', assessmentsRes);
-        console.log('[Dashboard] Skills response:', skillsRes);
-        console.log('[Dashboard] Jobs response:', jobsRes);
-
+        // Fetch assessments
+        const assessmentsRes = await api.getMyAssessments();
         if (assessmentsRes.success && assessmentsRes.data) {
-          setAssessments(assessmentsRes.data.assessments || []);
+          setAssessments(assessmentsRes.data.slice(0, 10));
         }
 
+        // Fetch skills
+        const skillsRes = await api.getMySkills();
         if (skillsRes.success && skillsRes.data) {
           setSkills(skillsRes.data.verified_skills || []);
         }
 
+        // Fetch job postings
+        const jobsRes = await api.getJobPostings();
         if (jobsRes.success && jobsRes.data) {
-          setRecommendedJobs(jobsRes.data.job_postings || []);
+          setJobs(jobsRes.data.slice(0, 10));
         }
-      } else if (user?.user_type === 'employer') {
-        console.log('[Dashboard] Loading employer data...');
-        // Load employer dashboard data
-        const [statsRes, jobsRes] = await Promise.all([
-          api.getJobPostingStats(),
-          api.getMyJobPostings({ page: 1, per_page: 5 }),
-        ]);
-
-        if (statsRes.success && statsRes.data) {
-          setJobStats(statsRes.data.stats);
-        }
-
-        if (jobsRes.success && jobsRes.data) {
-          setMyJobs(jobsRes.data.job_postings || []);
-        }
-      } else if (user?.user_type === 'educator') {
-        // Load educator dashboard data
-        const challengesRes = await api.getChallenges();
-
-        if (challengesRes.success && challengesRes.data) {
-          const challenges = challengesRes.data.challenges || [];
-          setChallengeStats({
-            total_challenges: challenges.length,
-            by_difficulty: challenges.reduce((acc: any, c: any) => {
-              acc[c.difficulty] = (acc[c.difficulty] || 0) + 1;
-              return acc;
-            }, {}),
-          });
-        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to load dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  if (authLoading || loading) {
+    fetchData();
+  }, [user]);
+
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
 
+  // Route to appropriate dashboard based on user type
+  if (user.user_type === 'employer') {
+    return <EmployerDashboard user={user} />;
+  }
+
+  if (user.user_type === 'educator') {
+    return <EducatorDashboard user={user} />;
+  }
+
+  // Only show learner UI for learners
+  if (user.user_type !== 'learner') {
+    return <OtherUserDashboard user={user} />;
+  }
+
+  // Calculate stats
+  const totalAssessments = assessments.length;
+  const activeSkills = skills.filter((s) => s.status === 'active').length;
+  const averageScore = skills.length > 0
+    ? Math.round(skills.reduce((sum, s) => sum + s.score, 0) / skills.length)
+    : 0;
+  const matchingJobs = jobs.filter((job) =>
+    job.required_skills.some((reqSkill) =>
+      skills.some((s) => s.skill_name.toLowerCase().includes(reqSkill.toLowerCase()))
+    )
+  ).length;
+
+  // Profile completion
+  const requiredFields = ['full_name', 'email', 'bio', 'github_url', 'linkedin_url'];
+  const filledFields = requiredFields.filter((field) => user?.[field as keyof typeof user]);
+  const completionPercentage = Math.round((filledFields.length / requiredFields.length) * 100);
+
+  // Skills expiring soon (30 days)
+  const expiringSkills = skills.filter((skill) => {
+    if (!skill.expires_at || skill.status !== 'active') return false;
+    const daysUntilExpiry = Math.floor(
+      (new Date(skill.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
+  });
+
+  // Mixed content cards
+  const mixedCards = [
+    ...skills.slice(0, 4).map((skill) => ({ type: 'skill', data: skill })),
+    ...assessments.slice(0, 3).map((assessment) => ({ type: 'assessment', data: assessment })),
+    ...jobs.slice(0, 3).map((job) => ({ type: 'job', data: job })),
+  ];
+
+  // Filter cards
+  const filteredCards = mixedCards.filter((card) => {
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'skills') return card.type === 'skill';
+    if (activeFilter === 'assessments') return card.type === 'assessment';
+    if (activeFilter === 'jobs') return card.type === 'job';
+    return true;
+  });
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
-          <p className="text-gray-600">Welcome back, {user?.full_name}</p>
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+      {/* Header */}
+      <header className={`sticky top-0 z-50 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
+        <div className="max-w-[1400px] mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl font-bold">SkillChain</h1>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search skills, assessments, jobs..."
+                  className={`pl-10 pr-4 py-2 rounded-lg border ${
+                    darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200'
+                  } focus:outline-none focus:ring-2 focus:ring-black w-80`}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}
+              >
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+              <button className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} relative`}>
+                <Bell className="w-5 h-5" />
+                {expiringSkills.length > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
+                )}
+              </button>
+              <button
+                onClick={() => router.push('/settings')}
+                className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => router.push('/profile/me')}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black text-white"
+              >
+                <UserCircle className="w-5 h-5" />
+                <span className="text-sm font-medium">{user.full_name}</span>
+              </button>
+            </div>
+          </div>
         </div>
+      </header>
 
-        {/* Learner Dashboard */}
-        {user?.user_type === 'learner' && (
-          <>
-            {/* Profile Completion Alert */}
-            {(() => {
-              const requiredFields = ['full_name', 'email', 'bio', 'github_url', 'linkedin_url'];
-              const filledFields = requiredFields.filter(field => user?.[field as keyof typeof user]);
-              const completionPercentage = Math.round((filledFields.length / requiredFields.length) * 100);
+      {/* Main Content */}
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
+        <div className="flex gap-8">
+          {/* Left Sidebar Navigation */}
+          <aside className={`w-20 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-4 flex flex-col items-center gap-6 h-fit sticky top-24`}>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="p-3 rounded-xl bg-black text-white"
+            >
+              <BarChart3 className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => router.push('/assessments')}
+              className={`p-3 rounded-xl ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+            >
+              <BookOpen className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => router.push('/assessments/my-skills')}
+              className={`p-3 rounded-xl ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+            >
+              <Award className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => router.push('/talent/jobs')}
+              className={`p-3 rounded-xl ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+            >
+              <Briefcase className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => router.push('/profile/me')}
+              className={`p-3 rounded-xl ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+            >
+              <UserCircle className="w-6 h-6" />
+            </button>
+          </aside>
 
-              if (completionPercentage < 100) {
-                return (
-                  <Card className="mb-6 bg-blue-50 border-blue-200">
-                    <CardContent className="pt-6">
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0">
-                          <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-blue-900 mb-1">Complete Your Profile</h3>
-                          <p className="text-sm text-blue-700 mb-3">
-                            Your profile is {completionPercentage}% complete. Complete it to get better job matches.
-                          </p>
-                          <div className="w-full bg-blue-200 rounded-full h-2 mb-3">
-                            <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${completionPercentage}%` }}></div>
-                          </div>
-                          <Link href="/profile/me">
-                            <Button size="sm" variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white">
-                              Complete Profile
-                            </Button>
-                          </Link>
-                        </div>
+          {/* Main Section */}
+          <main className="flex-1">
+            {/* Alerts */}
+            {completionPercentage < 100 && (
+              <Card className={`mb-6 ${darkMode ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-200'}`}>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold mb-2 flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5 text-blue-600" />
+                      Complete Your Profile
+                    </h3>
+                    <p className={`text-sm mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      Your profile is {completionPercentage}% complete. A complete profile increases your visibility to employers.
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-600 transition-all"
+                          style={{ width: `${completionPercentage}%` }}
+                        ></div>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              }
-              return null;
-            })()}
-
-            {/* Skills Expiring Soon Alert */}
-            {(() => {
-              const now = new Date();
-              const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-              const expiringSoon = skills.filter(skill => {
-                const expiryDate = new Date(skill.expires_at);
-                return !skill.is_expired && expiryDate <= thirtyDaysFromNow;
-              });
-
-              if (expiringSoon.length > 0) {
-                return (
-                  <Card className="mb-6 bg-orange-50 border-orange-200">
-                    <CardContent className="pt-6">
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0">
-                          <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-orange-900 mb-1">Skills Expiring Soon</h3>
-                          <p className="text-sm text-orange-700 mb-3">
-                            {expiringSoon.length} {expiringSoon.length === 1 ? 'skill expires' : 'skills expire'} in the next 30 days. Retake assessments to keep your credentials valid.
-                          </p>
-                          <div className="space-y-2 mb-3">
-                            {expiringSoon.map(skill => {
-                              const daysUntilExpiry = Math.ceil((new Date(skill.expires_at).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                              return (
-                                <div key={skill.skill} className="flex justify-between items-center text-sm">
-                                  <span className="font-medium capitalize text-orange-900">{skill.skill}</span>
-                                  <span className="text-orange-700">{daysUntilExpiry} days left</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          <Link href="/assessments">
-                            <Button size="sm" variant="outline" className="border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white">
-                              Renew Skills
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              }
-              return null;
-            })()}
-
-            {/* Quick Actions */}
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Link href="/assessments">
-                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
-                      <span className="text-sm">Take Assessment</span>
-                    </Button>
-                  </Link>
-                  <Link href="/assessments/my-skills">
-                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="outline">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                      </svg>
-                      <span className="text-sm">My Skills</span>
-                    </Button>
-                  </Link>
-                  <Link href="/jobs">
-                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="outline">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      <span className="text-sm">Find Jobs</span>
-                    </Button>
-                  </Link>
-                  <Link href="/profile/me">
-                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="outline">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      <span className="text-sm">My Profile</span>
-                    </Button>
-                  </Link>
+                      <Button size="sm" onClick={() => router.push('/profile/me')}>
+                        Complete Profile
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </Card>
+            )}
 
-            {/* Stats */}
-            <div className="grid md:grid-cols-4 gap-6 mb-8">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="text-gray-700">
-                      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="text-3xl font-bold mb-1">{assessments.length}</div>
-                  <div className="text-sm text-gray-600">Assessments Taken</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="text-green-600">
-                      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="text-3xl font-bold mb-1 text-green-600">{skills.filter(s => !s.is_expired).length}</div>
-                  <div className="text-sm text-gray-600">Active Skills</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="text-blue-600">
-                      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="text-3xl font-bold mb-1 text-blue-600">
-                    {skills.length > 0
-                      ? Math.round(skills.reduce((sum, s) => sum + s.score, 0) / skills.length)
-                      : 0}
-                  </div>
-                  <div className="text-sm text-gray-600">Average Score</div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="text-purple-600">
-                      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="text-3xl font-bold mb-1 text-purple-600">{recommendedJobs.length}</div>
-                  <div className="text-sm text-gray-600">Available Jobs</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Recent Assessments */}
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle>Recent Assessments</CardTitle>
-                    <Link href="/assessments/my-assessments">
-                      <Button variant="ghost" size="sm">View All</Button>
-                    </Link>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {assessments.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="text-6xl mb-4">📝</div>
-                      <h3 className="text-lg font-semibold mb-2">No Assessments Yet</h3>
-                      <p className="text-gray-600 mb-6 text-sm">
-                        Start verifying your skills to stand out to employers
-                      </p>
-                      <Link href="/assessments">
-                        <Button size="sm">Take Your First Assessment</Button>
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {assessments.slice(0, 5).map((assessment) => (
-                        <div key={assessment._id} className="flex justify-between items-center p-3 rounded-lg bg-gray-50 border border-gray-100 hover:border-gray-200 transition-colors">
-                          <div className="flex-1">
-                            <div className="font-medium capitalize mb-1">{assessment.skill}</div>
-                            <div className="text-xs text-gray-600 flex items-center gap-2">
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              {new Date(assessment.assessment_date).toLocaleDateString()}
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end">
-                            <div className="text-2xl font-bold text-blue-600">{assessment.score}</div>
-                            <div className="text-xs text-gray-500">/ 100</div>
-                          </div>
-                        </div>
+            {expiringSkills.length > 0 && (
+              <Card className={`mb-6 ${darkMode ? 'bg-orange-900/20 border-orange-800' : 'bg-orange-50 border-orange-200'}`}>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold mb-2 flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-orange-600" />
+                      Skills Expiring Soon
+                    </h3>
+                    <p className={`text-sm mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {expiringSkills.length} skill credential{expiringSkills.length > 1 ? 's' : ''} will expire in the next 30 days.
+                      Renew them to maintain your verified status.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {expiringSkills.slice(0, 3).map((skill) => (
+                        <span
+                          key={skill._id}
+                          className={`text-xs px-3 py-1 rounded-full ${
+                            darkMode ? 'bg-orange-800 text-orange-100' : 'bg-orange-100 text-orange-800'
+                          }`}
+                        >
+                          {skill.skill_name}
+                        </span>
                       ))}
-                      {assessments.length > 5 && (
-                        <Link href="/assessments/my-assessments">
-                          <div className="text-center py-2 text-sm text-blue-600 hover:text-blue-700 font-medium">
-                            View {assessments.length - 5} more assessments →
-                          </div>
-                        </Link>
-                      )}
                     </div>
-                  )}
-                </CardContent>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Stats Section */}
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Assessments</p>
+                    <p className="text-2xl font-bold mt-1">{totalAssessments}</p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+                    <BookOpen className="w-6 h-6 text-blue-600" />
+                  </div>
+                </div>
               </Card>
 
-              {/* Top Skills */}
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <CardTitle>Your Top Skills</CardTitle>
-                    <Link href="/assessments/my-skills">
-                      <Button variant="ghost" size="sm">View All</Button>
-                    </Link>
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Active Skills</p>
+                    <p className="text-2xl font-bold mt-1">{activeSkills}</p>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {skills.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="text-6xl mb-4">🏆</div>
-                      <h3 className="text-lg font-semibold mb-2">No Verified Skills</h3>
-                      <p className="text-gray-600 mb-6 text-sm">
-                        Complete assessments to earn verified skill badges
-                      </p>
-                      <Link href="/assessments">
-                        <Button size="sm">Start Verifying Skills</Button>
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {skills
-                        .filter(s => !s.is_expired)
-                        .sort((a, b) => b.score - a.score)
-                        .slice(0, 5)
-                        .map((skill) => {
-                          const daysUntilExpiry = Math.ceil((new Date(skill.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                          const isExpiringSoon = daysUntilExpiry <= 30;
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-green-900/30' : 'bg-green-100'}`}>
+                    <Award className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+              </Card>
 
-                          return (
-                            <div key={skill.skill} className="flex justify-between items-center p-3 rounded-lg bg-gray-50 border border-gray-100">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="font-medium capitalize">{skill.skill}</span>
-                                  {skill.score >= 90 && (
-                                    <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded font-medium">Expert</span>
-                                  )}
-                                  {skill.score >= 70 && skill.score < 90 && (
-                                    <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded font-medium">Advanced</span>
-                                  )}
-                                </div>
-                                <div className={`text-xs ${isExpiringSoon ? 'text-orange-600' : 'text-gray-600'} flex items-center gap-1`}>
-                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                  </svg>
-                                  {isExpiringSoon ? `Expires in ${daysUntilExpiry} days` : `Valid for ${daysUntilExpiry} days`}
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-end">
-                                <div className="text-2xl font-bold text-green-600">{skill.score}</div>
-                                <div className="text-xs text-gray-500">score</div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      {skills.filter(s => !s.is_expired).length > 5 && (
-                        <Link href="/assessments/my-skills">
-                          <div className="text-center py-2 text-sm text-blue-600 hover:text-blue-700 font-medium">
-                            View {skills.filter(s => !s.is_expired).length - 5} more skills →
-                          </div>
-                        </Link>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Avg Score</p>
+                    <p className="text-2xl font-bold mt-1">{averageScore}%</p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+                    <TrendingUp className="w-6 h-6 text-purple-600" />
+                  </div>
+                </div>
+              </Card>
+
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Matching Jobs</p>
+                    <p className="text-2xl font-bold mt-1">{matchingJobs}</p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-orange-900/30' : 'bg-orange-100'}`}>
+                    <Briefcase className="w-6 h-6 text-orange-600" />
+                  </div>
+                </div>
               </Card>
             </div>
 
-            {/* Jobs Section */}
-            <Card className="mt-8">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Jobs Matching Your Skills</CardTitle>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {skills.length > 0
-                        ? `Based on your verified ${skills.filter(s => !s.is_expired).length} skill${skills.filter(s => !s.is_expired).length !== 1 ? 's' : ''}`
-                        : 'Complete assessments to see personalized job matches'
-                      }
-                    </p>
-                  </div>
-                  <Link href="/jobs">
-                    <Button variant="ghost" size="sm">Browse All Jobs</Button>
-                  </Link>
+            {/* Filter and View Controls */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveFilter('all')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'all'
+                      ? 'bg-black text-white'
+                      : darkMode
+                      ? 'bg-gray-800 hover:bg-gray-700'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setActiveFilter('skills')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'skills'
+                      ? 'bg-black text-white'
+                      : darkMode
+                      ? 'bg-gray-800 hover:bg-gray-700'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  Skills ({skills.length})
+                </button>
+                <button
+                  onClick={() => setActiveFilter('assessments')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'assessments'
+                      ? 'bg-black text-white'
+                      : darkMode
+                      ? 'bg-gray-800 hover:bg-gray-700'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  Assessments ({totalAssessments})
+                </button>
+                <button
+                  onClick={() => setActiveFilter('jobs')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'jobs'
+                      ? 'bg-black text-white'
+                      : darkMode
+                      ? 'bg-gray-800 hover:bg-gray-700'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  Jobs ({jobs.length})
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-lg ${
+                    viewMode === 'grid'
+                      ? 'bg-black text-white'
+                      : darkMode
+                      ? 'bg-gray-800 hover:bg-gray-700'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  <Grid3x3 className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-lg ${
+                    viewMode === 'list'
+                      ? 'bg-black text-white'
+                      : darkMode
+                      ? 'bg-gray-800 hover:bg-gray-700'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  <List className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Cards Grid/List */}
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+                <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Loading your content...</p>
+              </div>
+            ) : filteredCards.length === 0 ? (
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="text-center py-12">
+                  <p className={`text-lg font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>
+                    No {activeFilter === 'all' ? 'content' : activeFilter} yet
+                  </p>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
+                    {activeFilter === 'skills' && 'Take an assessment to earn your first skill credential.'}
+                    {activeFilter === 'assessments' && 'Start your first assessment to verify your skills.'}
+                    {activeFilter === 'jobs' && 'No job postings available at the moment.'}
+                    {activeFilter === 'all' && 'Get started by taking an assessment or browsing jobs.'}
+                  </p>
+                  {activeFilter !== 'jobs' && (
+                    <Button onClick={() => router.push('/assessments')}>
+                      Browse Assessments
+                    </Button>
+                  )}
                 </div>
-              </CardHeader>
-              <CardContent>
-                {recommendedJobs.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="text-6xl mb-4">💼</div>
-                    <h3 className="text-lg font-semibold mb-2">No Jobs Available</h3>
-                    <p className="text-gray-600 mb-6 text-sm">
-                      {skills.length === 0
-                        ? 'Verify your skills to get matched with relevant job opportunities'
-                        : 'Check back soon for new opportunities matching your skills'
-                      }
-                    </p>
-                    {skills.length === 0 && (
-                      <Link href="/assessments">
-                        <Button size="sm">Verify Your Skills</Button>
-                      </Link>
-                    )}
-                  </div>
-                ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {recommendedJobs.map((job) => (
-                      <Link
-                        key={job._id}
-                        href={`/jobs/${job._id}`}
-                        className="block p-4 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200 hover:border-gray-300 hover:shadow-sm"
+              </Card>
+            ) : (
+              <div className={viewMode === 'grid' ? 'grid grid-cols-3 gap-6' : 'space-y-4'}>
+                {filteredCards.map((card, index) => {
+                  if (card.type === 'skill') {
+                    const skill = card.data as Skill;
+                    const daysUntilExpiry = skill.expires_at
+                      ? Math.floor(
+                          (new Date(skill.expires_at).getTime() - new Date().getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        )
+                      : null;
+
+                    return (
+                      <Card
+                        key={`skill-${skill._id}`}
+                        className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' : 'bg-white hover:shadow-lg'} transition-all cursor-pointer`}
+                        onClick={() => router.push('/assessments/my-skills')}
                       >
-                        <h4 className="font-semibold mb-2 line-clamp-2">{job.title}</h4>
-                        <div className="text-sm text-gray-600 mb-3">
-                          <div className="flex items-center gap-1 mb-1">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd" />
-                            </svg>
-                            {job.company_name}
+                        <div className="flex items-start justify-between mb-3">
+                          <div className={`p-2 rounded-lg ${darkMode ? 'bg-green-900/30' : 'bg-green-100'}`}>
+                            <Award className="w-5 h-5 text-green-600" />
                           </div>
-                          <div className="flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                            </svg>
-                            {job.location}
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {job.skills_required.slice(0, 2).map((skill) => (
-                            <span key={skill} className="px-2 py-1 bg-black text-white rounded text-xs uppercase font-medium">
-                              {skill}
+                          {skill.score >= 90 && (
+                            <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 font-medium">
+                              Expert
                             </span>
-                          ))}
-                          {job.skills_required.length > 2 && (
-                            <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs">
-                              +{job.skills_required.length - 2}
+                          )}
+                          {skill.score >= 70 && skill.score < 90 && (
+                            <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 font-medium">
+                              Advanced
                             </span>
                           )}
                         </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        {/* Employer Dashboard */}
-        {user?.user_type === 'employer' && (
-          <>
-            {/* Quick Actions */}
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Link href="/jobs/create">
-                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      <span className="text-sm">Post New Job</span>
-                    </Button>
-                  </Link>
-                  <Link href="/jobs/my-postings">
-                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="outline">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      <span className="text-sm">My Postings</span>
-                    </Button>
-                  </Link>
-                  <Link href="/talent">
-                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="outline">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      <span className="text-sm">Browse Talent</span>
-                    </Button>
-                  </Link>
-                  <Link href="/profile/me">
-                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="outline">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                      <span className="text-sm">Company Profile</span>
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Stats */}
-            {jobStats && (
-              <div className="grid md:grid-cols-4 gap-6 mb-8">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-3xl font-bold mb-1">{jobStats.total_jobs || 0}</div>
-                    <div className="text-sm text-gray-600">Total Jobs</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-3xl font-bold mb-1 text-green-600">{jobStats.active_jobs || 0}</div>
-                    <div className="text-sm text-gray-600">Active Jobs</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-3xl font-bold mb-1 text-blue-600">{jobStats.total_views || 0}</div>
-                    <div className="text-sm text-gray-600">Total Views</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-3xl font-bold mb-1 text-purple-600">{jobStats.total_applications || 0}</div>
-                    <div className="text-sm text-gray-600">Applications</div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Recent Job Postings */}
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Recent Job Postings</CardTitle>
-                  <Link href="/jobs/my-postings">
-                    <Button variant="ghost" size="sm">View All</Button>
-                  </Link>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {myJobs.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-600 mb-4">No job postings yet</p>
-                    <Link href="/jobs/create">
-                      <Button size="sm">Post Your First Job</Button>
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {myJobs.map((job) => (
-                      <Link
-                        key={job._id}
-                        href={`/jobs/${job._id}`}
-                        className="block p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
-                      >
-                        <div className="font-medium mb-1">{job.title}</div>
-                        <div className="text-sm text-gray-600 mb-2">
-                          {job.location} • Posted {new Date(job.posted_at).toLocaleDateString()}
+                        <h3 className="font-semibold mb-2">{skill.skill_name}</h3>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
+                          Proficiency: {skill.proficiency_level}
+                        </p>
+                        <div className="flex items-center justify-between text-sm mb-3">
+                          <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Score</span>
+                          <span className="font-semibold">{skill.score}%</span>
                         </div>
-                        <div className="flex gap-2">
-                          {job.skills_required.slice(0, 3).map((skill) => (
-                            <span key={skill} className="px-2 py-1 bg-black text-white rounded text-xs">
-                              {skill.toUpperCase()}
+                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-3">
+                          <div
+                            className="h-full bg-green-600 transition-all"
+                            style={{ width: `${skill.score}%` }}
+                          ></div>
+                        </div>
+                        {daysUntilExpiry !== null && daysUntilExpiry > 0 && (
+                          <div className="flex items-center gap-2 text-xs text-orange-600">
+                            <Clock className="w-3 h-3" />
+                            <span>Expires in {daysUntilExpiry} days</span>
+                          </div>
+                        )}
+                      </Card>
+                    );
+                  }
+
+                  if (card.type === 'assessment') {
+                    const assessment = card.data as Assessment;
+                    return (
+                      <Card
+                        key={`assessment-${assessment._id}`}
+                        className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' : 'bg-white hover:shadow-lg'} transition-all cursor-pointer`}
+                        onClick={() => router.push('/assessments')}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className={`p-2 rounded-lg ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+                            <BookOpen className="w-5 h-5 text-blue-600" />
+                          </div>
+                          {assessment.status === 'completed' && (
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              darkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'
+                            } font-medium flex items-center gap-1`}>
+                              <CheckCircle2 className="w-3 h-3" />
+                              Completed
+                            </span>
+                          )}
+                          {assessment.status === 'in_progress' && (
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              darkMode ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-800'
+                            } font-medium`}>
+                              In Progress
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="font-semibold mb-2">
+                          {assessment.challenge_title || `Assessment #${assessment._id.slice(-6)}`}
+                        </h3>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-3`}>
+                          {assessment.skill_assessed || 'Skill assessment'}
+                        </p>
+                        {assessment.score !== undefined && (
+                          <div className="flex items-center justify-between text-sm mb-3">
+                            <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Score</span>
+                            <span className="font-semibold">{assessment.score}%</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <Calendar className="w-3 h-3" />
+                          <span>
+                            {new Date(assessment.submitted_at || assessment.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </Card>
+                    );
+                  }
+
+                  if (card.type === 'job') {
+                    const job = card.data as JobPosting;
+                    const matchingSkillsCount = job.required_skills.filter((reqSkill) =>
+                      skills.some((s) => s.skill_name.toLowerCase().includes(reqSkill.toLowerCase()))
+                    ).length;
+
+                    return (
+                      <Card
+                        key={`job-${job._id}`}
+                        className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' : 'bg-white hover:shadow-lg'} transition-all cursor-pointer`}
+                        onClick={() => router.push(`/talent/jobs/${job._id}`)}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className={`p-2 rounded-lg ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+                            <Briefcase className="w-5 h-5 text-purple-600" />
+                          </div>
+                          {matchingSkillsCount > 0 && (
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              darkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'
+                            } font-medium`}>
+                              {matchingSkillsCount} Match{matchingSkillsCount > 1 ? 'es' : ''}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="font-semibold mb-2">{job.title}</h3>
+                        <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-2`}>
+                          {job.company_name}
+                        </p>
+                        <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'} mb-3`}>
+                          {job.location} • {job.employment_type}
+                        </p>
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {job.required_skills.slice(0, 3).map((skill, idx) => (
+                            <span
+                              key={idx}
+                              className={`text-xs px-2 py-1 rounded ${
+                                darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'
+                              }`}
+                            >
+                              {skill}
                             </span>
                           ))}
+                          {job.required_skills.length > 3 && (
+                            <span
+                              className={`text-xs px-2 py-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
+                            >
+                              +{job.required_skills.length - 3} more
+                            </span>
+                          )}
                         </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </>
-        )}
+                        <div className="flex items-center justify-between text-sm">
+                          <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                            Posted {new Date(job.created_at).toLocaleDateString()}
+                          </span>
+                          <ExternalLink className="w-4 h-4 text-gray-400" />
+                        </div>
+                      </Card>
+                    );
+                  }
 
-        {/* Educator Dashboard */}
-        {user?.user_type === 'educator' && (
-          <>
-            {/* Quick Actions */}
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Link href="/admin/challenges">
-                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      <span className="text-sm">Create Challenge</span>
-                    </Button>
-                  </Link>
-                  <Link href="/admin/challenges">
-                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="outline">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
-                      <span className="text-sm">Manage Challenges</span>
-                    </Button>
-                  </Link>
-                  <Link href="/assessments/leaderboard">
-                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="outline">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                      <span className="text-sm">Leaderboard</span>
-                    </Button>
-                  </Link>
-                  <Link href="/profile/me">
-                    <Button className="w-full h-20 flex flex-col items-center justify-center gap-2" variant="outline">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      <span className="text-sm">My Profile</span>
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Stats */}
-            {challengeStats && (
-              <div className="grid md:grid-cols-4 gap-6 mb-8">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-3xl font-bold mb-1">{challengeStats.total_challenges || 0}</div>
-                    <div className="text-sm text-gray-600">Total Challenges</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-3xl font-bold mb-1 text-green-600">
-                      {challengeStats.by_difficulty?.beginner || 0}
-                    </div>
-                    <div className="text-sm text-gray-600">Beginner</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-3xl font-bold mb-1 text-yellow-600">
-                      {challengeStats.by_difficulty?.intermediate || 0}
-                    </div>
-                    <div className="text-sm text-gray-600">Intermediate</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-3xl font-bold mb-1 text-red-600">
-                      {challengeStats.by_difficulty?.advanced || 0}
-                    </div>
-                    <div className="text-sm text-gray-600">Advanced</div>
-                  </CardContent>
-                </Card>
+                  return null;
+                })}
               </div>
             )}
+          </main>
 
-            {/* Info Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Challenge Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">
-                  As an educator, you can create and manage skill assessment challenges for learners.
-                  Your challenges help verify skills across various technologies and difficulty levels.
+          {/* Right Sidebar - Quick Actions */}
+          <aside className={`w-80 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 h-fit sticky top-24`}>
+            <h3 className="font-semibold mb-4">Quick Actions</h3>
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => router.push('/assessments')}
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                Take Assessment
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => router.push('/talent/jobs')}
+              >
+                <Briefcase className="w-4 h-4 mr-2" />
+                Browse Jobs
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => router.push('/profile/me')}
+              >
+                <UserCircle className="w-4 h-4 mr-2" />
+                Edit Profile
+              </Button>
+            </div>
+
+            <div className="mt-8">
+              <h3 className="font-semibold mb-4">Recent Activity</h3>
+              {assessments.length === 0 ? (
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  No recent activity
                 </p>
-                <Link href="/admin/challenges">
-                  <Button>Manage Challenges</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </>
-        )}
+              ) : (
+                <div className="space-y-3">
+                  {assessments.slice(0, 5).map((assessment) => (
+                    <div
+                      key={assessment._id}
+                      className={`text-sm p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}
+                    >
+                      <p className="font-medium mb-1">
+                        {assessment.challenge_title || 'Assessment'}
+                      </p>
+                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {assessment.score !== undefined && `Score: ${assessment.score}% • `}
+                        {new Date(assessment.submitted_at || assessment.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </aside>
+        </div>
       </div>
+    </div>
+  );
+}
+
+// Employer Dashboard
+function EmployerDashboard({ user }: { user: any }) {
+  const router = useRouter();
+  const [jobs, setJobs] = useState<JobPosting[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'closed'>('all');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const jobsRes = await api.getJobPostings();
+        if (jobsRes.success && jobsRes.data) {
+          setJobs(jobsRes.data.slice(0, 20));
+        }
+      } catch (error) {
+        console.error('Error fetching employer data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const activeJobs = jobs.filter((j) => j.status === 'active').length;
+  const closedJobs = jobs.filter((j) => j.status === 'closed').length;
+  const totalApplications = 0; // TODO: Get from API when available
+
+  const filteredJobs = jobs.filter((job) => {
+    if (activeFilter === 'all') return true;
+    if (activeFilter === 'active') return job.status === 'active';
+    if (activeFilter === 'closed') return job.status === 'closed';
+    return true;
+  });
+
+  return (
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+      {/* Header */}
+      <header className={`sticky top-0 z-50 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
+        <div className="max-w-[1400px] mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl font-bold">SkillChain</h1>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search jobs, candidates..."
+                  className={`pl-10 pr-4 py-2 rounded-lg border ${
+                    darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200'
+                  } focus:outline-none focus:ring-2 focus:ring-black w-80`}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button onClick={() => setDarkMode(!darkMode)} className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+              <button className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <Bell className="w-5 h-5" />
+              </button>
+              <button onClick={() => router.push('/settings')} className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <Settings className="w-5 h-5" />
+              </button>
+              <button onClick={() => router.push('/profile/me')} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black text-white">
+                <UserCircle className="w-5 h-5" />
+                <span className="text-sm font-medium">{user.full_name}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
+        <div className="flex gap-8">
+          {/* Left Sidebar Navigation */}
+          <aside className={`w-20 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-4 flex flex-col items-center gap-6 h-fit sticky top-24`}>
+            <button onClick={() => router.push('/dashboard')} className="p-3 rounded-xl bg-black text-white">
+              <BarChart3 className="w-6 h-6" />
+            </button>
+            <button onClick={() => router.push('/admin/job-postings')} className={`p-3 rounded-xl ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+              <Briefcase className="w-6 h-6" />
+            </button>
+            <button onClick={() => router.push('/talent')} className={`p-3 rounded-xl ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+              <UserCircle className="w-6 h-6" />
+            </button>
+            <button onClick={() => router.push('/profile/me')} className={`p-3 rounded-xl ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+              <Settings className="w-6 h-6" />
+            </button>
+          </aside>
+
+          {/* Main Section */}
+          <main className="flex-1">
+            {/* Stats Section */}
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Jobs</p>
+                    <p className="text-2xl font-bold mt-1">{jobs.length}</p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+                    <Briefcase className="w-6 h-6 text-purple-600" />
+                  </div>
+                </div>
+              </Card>
+
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Active Jobs</p>
+                    <p className="text-2xl font-bold mt-1">{activeJobs}</p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-green-900/30' : 'bg-green-100'}`}>
+                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+              </Card>
+
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Applications</p>
+                    <p className="text-2xl font-bold mt-1">{totalApplications}</p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+                    <UserCircle className="w-6 h-6 text-blue-600" />
+                  </div>
+                </div>
+              </Card>
+
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Closed Jobs</p>
+                    <p className="text-2xl font-bold mt-1">{closedJobs}</p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <Clock className="w-6 h-6 text-gray-600" />
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Filter and View Controls */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveFilter('all')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'all' ? 'bg-black text-white' : darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  All Jobs
+                </button>
+                <button
+                  onClick={() => setActiveFilter('active')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'active' ? 'bg-black text-white' : darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  Active ({activeJobs})
+                </button>
+                <button
+                  onClick={() => setActiveFilter('closed')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'closed' ? 'bg-black text-white' : darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  Closed ({closedJobs})
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button onClick={() => router.push('/admin/job-postings/create')}>
+                  Post New Job
+                </Button>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-black text-white' : darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'}`}
+                >
+                  <Grid3x3 className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-black text-white' : darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'}`}
+                >
+                  <List className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Job Cards */}
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+                <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Loading jobs...</p>
+              </div>
+            ) : filteredJobs.length === 0 ? (
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="text-center py-12">
+                  <Briefcase className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                  <p className={`text-lg font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>No jobs posted yet</p>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>Start hiring by posting your first job</p>
+                  <Button onClick={() => router.push('/admin/job-postings/create')}>Post Your First Job</Button>
+                </div>
+              </Card>
+            ) : (
+              <div className={viewMode === 'grid' ? 'grid grid-cols-3 gap-6' : 'space-y-4'}>
+                {filteredJobs.map((job) => (
+                  <Card
+                    key={job._id}
+                    className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' : 'bg-white hover:shadow-lg'} transition-all cursor-pointer`}
+                    onClick={() => router.push(`/admin/job-postings/${job._id}`)}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className={`p-2 rounded-lg ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+                        <Briefcase className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        job.status === 'active'
+                          ? darkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'
+                          : darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-800'
+                      } font-medium`}>
+                        {job.status}
+                      </span>
+                    </div>
+                    <h3 className="font-semibold mb-2">{job.title}</h3>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-2`}>{job.company_name}</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'} mb-3`}>{job.location} • {job.employment_type}</p>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {job.required_skills.slice(0, 3).map((skill, idx) => (
+                        <span key={idx} className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
+                          {skill}
+                        </span>
+                      ))}
+                      {job.required_skills.length > 3 && (
+                        <span className={`text-xs px-2 py-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          +{job.required_skills.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                        Posted {new Date(job.created_at).toLocaleDateString()}
+                      </span>
+                      <ExternalLink className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </main>
+
+          {/* Right Sidebar */}
+          <aside className={`w-80 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 h-fit sticky top-24`}>
+            <h3 className="font-semibold mb-4">Quick Actions</h3>
+            <div className="space-y-3">
+              <Button variant="outline" className="w-full justify-start" onClick={() => router.push('/admin/job-postings/create')}>
+                <Briefcase className="w-4 h-4 mr-2" />
+                Post New Job
+              </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={() => router.push('/talent')}>
+                <UserCircle className="w-4 h-4 mr-2" />
+                Browse Talent
+              </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={() => router.push('/profile/me')}>
+                <Settings className="w-4 h-4 mr-2" />
+                Company Profile
+              </Button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Educator Dashboard
+function EducatorDashboard({ user }: { user: any }) {
+  const router = useRouter();
+  const [challenges, setChallenges] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'beginner' | 'intermediate' | 'advanced'>('all');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const challengesRes = await api.getChallenges();
+        if (challengesRes.success && challengesRes.data) {
+          setChallenges(challengesRes.data.challenges || []);
+        }
+      } catch (error) {
+        console.error('Error fetching educator data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const beginnerCount = challenges.filter((c) => c.difficulty === 'beginner').length;
+  const intermediateCount = challenges.filter((c) => c.difficulty === 'intermediate').length;
+  const advancedCount = challenges.filter((c) => c.difficulty === 'advanced').length;
+
+  const filteredChallenges = challenges.filter((challenge) => {
+    if (activeFilter === 'all') return true;
+    return challenge.difficulty === activeFilter;
+  });
+
+  return (
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+      {/* Header */}
+      <header className={`sticky top-0 z-50 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
+        <div className="max-w-[1400px] mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h1 className="text-xl font-bold">SkillChain</h1>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search challenges, learners..."
+                  className={`pl-10 pr-4 py-2 rounded-lg border ${
+                    darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200'
+                  } focus:outline-none focus:ring-2 focus:ring-black w-80`}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button onClick={() => setDarkMode(!darkMode)} className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+              <button className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <Bell className="w-5 h-5" />
+              </button>
+              <button onClick={() => router.push('/settings')} className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <Settings className="w-5 h-5" />
+              </button>
+              <button onClick={() => router.push('/profile/me')} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black text-white">
+                <UserCircle className="w-5 h-5" />
+                <span className="text-sm font-medium">{user.full_name}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
+        <div className="flex gap-8">
+          {/* Left Sidebar Navigation */}
+          <aside className={`w-20 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-4 flex flex-col items-center gap-6 h-fit sticky top-24`}>
+            <button onClick={() => router.push('/dashboard')} className="p-3 rounded-xl bg-black text-white">
+              <BarChart3 className="w-6 h-6" />
+            </button>
+            <button onClick={() => router.push('/admin/challenges')} className={`p-3 rounded-xl ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+              <BookOpen className="w-6 h-6" />
+            </button>
+            <button onClick={() => router.push('/assessments')} className={`p-3 rounded-xl ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+              <Award className="w-6 h-6" />
+            </button>
+            <button onClick={() => router.push('/profile/me')} className={`p-3 rounded-xl ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}>
+              <UserCircle className="w-6 h-6" />
+            </button>
+          </aside>
+
+          {/* Main Section */}
+          <main className="flex-1">
+            {/* Stats Section */}
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Challenges</p>
+                    <p className="text-2xl font-bold mt-1">{challenges.length}</p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
+                    <BookOpen className="w-6 h-6 text-blue-600" />
+                  </div>
+                </div>
+              </Card>
+
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Beginner</p>
+                    <p className="text-2xl font-bold mt-1">{beginnerCount}</p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-green-900/30' : 'bg-green-100'}`}>
+                    <Award className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+              </Card>
+
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Intermediate</p>
+                    <p className="text-2xl font-bold mt-1">{intermediateCount}</p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-yellow-900/30' : 'bg-yellow-100'}`}>
+                    <TrendingUp className="w-6 h-6 text-yellow-600" />
+                  </div>
+                </div>
+              </Card>
+
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Advanced</p>
+                    <p className="text-2xl font-bold mt-1">{advancedCount}</p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${darkMode ? 'bg-red-900/30' : 'bg-red-100'}`}>
+                    <AlertCircle className="w-6 h-6 text-red-600" />
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Filter and View Controls */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveFilter('all')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'all' ? 'bg-black text-white' : darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setActiveFilter('beginner')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'beginner' ? 'bg-black text-white' : darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  Beginner ({beginnerCount})
+                </button>
+                <button
+                  onClick={() => setActiveFilter('intermediate')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'intermediate' ? 'bg-black text-white' : darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  Intermediate ({intermediateCount})
+                </button>
+                <button
+                  onClick={() => setActiveFilter('advanced')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeFilter === 'advanced' ? 'bg-black text-white' : darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  Advanced ({advancedCount})
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button onClick={() => router.push('/admin/challenges/create')}>
+                  Create Challenge
+                </Button>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-black text-white' : darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'}`}
+                >
+                  <Grid3x3 className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-black text-white' : darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'}`}
+                >
+                  <List className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Challenge Cards */}
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+                <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Loading challenges...</p>
+              </div>
+            ) : filteredChallenges.length === 0 ? (
+              <Card className={darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <div className="text-center py-12">
+                  <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                  <p className={`text-lg font-semibold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-900'}`}>No challenges yet</p>
+                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>Create your first challenge to help learners verify their skills</p>
+                  <Button onClick={() => router.push('/admin/challenges/create')}>Create Challenge</Button>
+                </div>
+              </Card>
+            ) : (
+              <div className={viewMode === 'grid' ? 'grid grid-cols-3 gap-6' : 'space-y-4'}>
+                {filteredChallenges.map((challenge) => (
+                  <Card
+                    key={challenge._id}
+                    className={`${darkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-750' : 'bg-white hover:shadow-lg'} transition-all cursor-pointer`}
+                    onClick={() => router.push(`/admin/challenges/${challenge._id}`)}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className={`p-2 rounded-lg ${
+                        challenge.difficulty === 'beginner'
+                          ? darkMode ? 'bg-green-900/30' : 'bg-green-100'
+                          : challenge.difficulty === 'intermediate'
+                          ? darkMode ? 'bg-yellow-900/30' : 'bg-yellow-100'
+                          : darkMode ? 'bg-red-900/30' : 'bg-red-100'
+                      }`}>
+                        <BookOpen className={`w-5 h-5 ${
+                          challenge.difficulty === 'beginner'
+                            ? 'text-green-600'
+                            : challenge.difficulty === 'intermediate'
+                            ? 'text-yellow-600'
+                            : 'text-red-600'
+                        }`} />
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        challenge.difficulty === 'beginner'
+                          ? darkMode ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'
+                          : challenge.difficulty === 'intermediate'
+                          ? darkMode ? 'bg-yellow-900/30 text-yellow-400' : 'bg-yellow-100 text-yellow-800'
+                          : darkMode ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-800'
+                      } font-medium capitalize`}>
+                        {challenge.difficulty}
+                      </span>
+                    </div>
+                    <h3 className="font-semibold mb-2">{challenge.title}</h3>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-3 line-clamp-2`}>
+                      {challenge.description}
+                    </p>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
+                        {challenge.skill_category || 'General'}
+                      </span>
+                      <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                        {challenge.time_limit || 60} min
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                        Created {new Date(challenge.created_at || Date.now()).toLocaleDateString()}
+                      </span>
+                      <ExternalLink className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </main>
+
+          {/* Right Sidebar */}
+          <aside className={`w-80 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl p-6 h-fit sticky top-24`}>
+            <h3 className="font-semibold mb-4">Quick Actions</h3>
+            <div className="space-y-3">
+              <Button variant="outline" className="w-full justify-start" onClick={() => router.push('/admin/challenges/create')}>
+                <BookOpen className="w-4 h-4 mr-2" />
+                Create Challenge
+              </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={() => router.push('/admin/challenges')}>
+                <Award className="w-4 h-4 mr-2" />
+                Manage Challenges
+              </Button>
+              <Button variant="outline" className="w-full justify-start" onClick={() => router.push('/assessments')}>
+                <BarChart3 className="w-4 h-4 mr-2" />
+                View Leaderboard
+              </Button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Fallback for public/unknown user types
+function OtherUserDashboard({ user }: { user: any }) {
+  const router = useRouter();
+  const userType = user.user_type || 'public';
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Welcome, {user.full_name}</h1>
+      <Card>
+        <p className="text-gray-600 mb-4">Dashboard for {userType} users coming soon.</p>
+        <Button onClick={() => router.push('/profile/me')}>View Profile</Button>
+      </Card>
     </div>
   );
 }

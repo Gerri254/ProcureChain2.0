@@ -40,35 +40,35 @@ export function Header() {
             </Link>
 
             <nav className="hidden md:flex space-x-1" ref={dropdownRef}>
-              {/* Assessments Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => toggleDropdown('assessments')}
-                  className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
-                >
-                  Assessments
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {openDropdown === 'assessments' && (
-                  <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                    <Link
-                      href="/assessments"
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                      onClick={() => setOpenDropdown(null)}
-                    >
-                      Browse Challenges
-                    </Link>
-                    {isAuthenticated && (
-                      <>
-                        <Link
-                          href="/assessments/my-assessments"
-                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                          onClick={() => setOpenDropdown(null)}
-                        >
-                          My Assessments
-                        </Link>
+              {/* Assessments Dropdown - Only for Learners & Educators */}
+              {isAuthenticated && (user?.user_type === 'learner' || user?.user_type === 'educator') && (
+                <div className="relative">
+                  <button
+                    onClick={() => toggleDropdown('assessments')}
+                    className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
+                  >
+                    Assessments
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {openDropdown === 'assessments' && (
+                    <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                      <Link
+                        href="/assessments"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Browse Challenges
+                      </Link>
+                      <Link
+                        href="/assessments/my-assessments"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        My Assessments
+                      </Link>
+                      {user?.user_type === 'learner' && (
                         <Link
                           href="/assessments/my-skills"
                           className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
@@ -76,60 +76,51 @@ export function Header() {
                         >
                           My Skills
                         </Link>
-                      </>
-                    )}
-                    <Link
-                      href="/assessments/leaderboard"
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                      onClick={() => setOpenDropdown(null)}
-                    >
-                      Leaderboard
-                    </Link>
-                  </div>
-                )}
-              </div>
+                      )}
+                      <Link
+                        href="/assessments/leaderboard"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Leaderboard
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
 
-              {/* Talent Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => toggleDropdown('talent')}
-                  className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
-                >
-                  Talent
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {openDropdown === 'talent' && (
-                  <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                    <Link
-                      href="/profiles"
-                      className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                      onClick={() => setOpenDropdown(null)}
-                    >
-                      Browse Talent
-                    </Link>
-                    {isAuthenticated && user?.user_type === 'learner' && (
-                      <>
-                        <Link
-                          href="/profile/me"
-                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                          onClick={() => setOpenDropdown(null)}
-                        >
-                          My Profile
-                        </Link>
-                        <Link
-                          href="/jobs"
-                          className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                          onClick={() => setOpenDropdown(null)}
-                        >
-                          Find Jobs
-                        </Link>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
+              {/* Talent Dropdown - Only for Employers */}
+              {isAuthenticated && user?.user_type === 'employer' && (
+                <div className="relative">
+                  <button
+                    onClick={() => toggleDropdown('talent')}
+                    className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
+                  >
+                    Talent
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {openDropdown === 'talent' && (
+                    <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                      <Link
+                        href="/talent"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Browse Talent
+                      </Link>
+                      <Link
+                        href="/admin/job-postings"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        My Job Postings
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Jobs Dropdown (Employer only) */}
               {isAuthenticated && user?.user_type === 'employer' && (
@@ -245,27 +236,27 @@ export function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
             <nav className="flex flex-col space-y-1">
-              {/* Assessments Section */}
-              <div className="px-2 py-1">
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                  Assessments
-                </div>
-                <Link
-                  href="/assessments"
-                  className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Browse Challenges
-                </Link>
-                {isAuthenticated && (
-                  <>
-                    <Link
-                      href="/assessments/my-assessments"
-                      className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      My Assessments
-                    </Link>
+              {/* Assessments Section - Only for Learners & Educators */}
+              {isAuthenticated && (user?.user_type === 'learner' || user?.user_type === 'educator') && (
+                <div className="px-2 py-1">
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                    Assessments
+                  </div>
+                  <Link
+                    href="/assessments"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Browse Challenges
+                  </Link>
+                  <Link
+                    href="/assessments/my-assessments"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    My Assessments
+                  </Link>
+                  {user?.user_type === 'learner' && (
                     <Link
                       href="/assessments/my-skills"
                       className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
@@ -273,48 +264,39 @@ export function Header() {
                     >
                       My Skills
                     </Link>
-                  </>
-                )}
-                <Link
-                  href="/assessments/leaderboard"
-                  className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Leaderboard
-                </Link>
-              </div>
-
-              {/* Talent Section */}
-              <div className="px-2 py-1 mt-2">
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                  Talent
+                  )}
+                  <Link
+                    href="/assessments/leaderboard"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Leaderboard
+                  </Link>
                 </div>
-                <Link
-                  href="/profiles"
-                  className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Browse Talent
-                </Link>
-                {isAuthenticated && user?.user_type === 'learner' && (
-                  <>
-                    <Link
-                      href="/profile/me"
-                      className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      My Profile
-                    </Link>
-                    <Link
-                      href="/jobs"
-                      className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Find Jobs
-                    </Link>
-                  </>
-                )}
-              </div>
+              )}
+
+              {/* Talent Section - Only for Employers */}
+              {isAuthenticated && user?.user_type === 'employer' && (
+                <div className="px-2 py-1 mt-2">
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                    Talent
+                  </div>
+                  <Link
+                    href="/talent"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Browse Talent
+                  </Link>
+                  <Link
+                    href="/admin/job-postings"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    My Job Postings
+                  </Link>
+                </div>
+              )}
 
               {/* Jobs Section (Employer only) */}
               {isAuthenticated && user?.user_type === 'employer' && (

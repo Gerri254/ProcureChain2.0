@@ -1,212 +1,220 @@
 # Backend Scripts
 
-This directory contains utility scripts for database seeding and maintenance.
+This directory contains utility scripts for SkillChain backend operations.
 
-## User Seeding
+## 🚨 Production vs Development
 
-The `seed_users.py` script populates the database with sample users for testing all three user types: learners, employers, and educators.
+### Production Mode (Recommended)
+**Use real, dynamic user data only. No seeding required.**
 
-### Usage
+All data is created through the UI:
+- Users register via `/register`
+- Educators create challenges via `/admin/challenges/create`
+- Employers post jobs via `/admin/job-postings/create`
+- Learners take assessments and earn credentials
+
+See [PRODUCTION_SETUP.md](../../PRODUCTION_SETUP.md) in the root directory for full instructions.
+
+---
+
+## Available Scripts
+
+### `clear_database.py` - Clear All Data
+**⚠️  USE WITH CAUTION - Deletes all data!**
+
+Removes all documents from all collections to prepare for production use.
 
 ```bash
-# Make sure you're in the backend directory
 cd backend
+python scripts/clear_database.py
+```
 
-# Run the user seeding script
+**What it does:**
+- Deletes all users
+- Deletes all profiles
+- Deletes all challenges
+- Deletes all assessments
+- Deletes all job postings
+- Deletes all audit logs
+
+**When to use:**
+- Transitioning from development to production
+- Removing all seeded/test data
+- Starting fresh with a clean database
+
+---
+
+### `seed_users.py` - Create Test Users (DEVELOPMENT ONLY)
+**⚠️  NOT RECOMMENDED FOR PRODUCTION**
+
+Creates sample users for development and testing.
+
+```bash
+cd backend
 python scripts/seed_users.py
 ```
 
-### What Gets Created
+**Creates:**
+- 5 Learners (sarah.chen@example.com, etc.)
+- 2 Employers (hr@techcorp.com, etc.)
+- 1 Educator (instructor@codeacademy.com)
 
-The script creates **8 sample users** across three user types:
+All passwords: `password123`
 
-**Learners (5 users):**
-- Sarah Chen (Mid-level, Full-stack, San Francisco) - Open to work ✓
-- Michael Rodriguez (Senior, Frontend, Austin)
-- Emily Johnson (Mid-level, Backend, Seattle) - Open to work ✓
-- David Kim (Junior, Full-stack, New York) - Open to work ✓
-- Jessica Martinez (Senior, Data Engineer, Boston)
-
-**Employers (2 companies):**
-- TechCorp HR Team (San Francisco) - 100-500 employees
-- InnovateAI Recruiting (New York) - AI startup, 10-50 employees
-
-**Educators (1 instructor):**
-- Jane Instructor (CodeAcademy) - 10 years teaching experience
-
-### Login Credentials
-
-**All accounts use the same password for testing:**
-```
-Password: password123
-```
-
-**Example logins:**
+**Login Credentials:**
 - Learner: `sarah.chen@example.com` / `password123`
 - Employer: `hr@techcorp.com` / `password123`
 - Educator: `instructor@codeacademy.com` / `password123`
 
-### User Profiles Include
+**When to use:**
+- Local development
+- Testing features
+- Demo presentations
 
-**Learners:**
-- Bio, location, experience level
-- Portfolio, GitHub, LinkedIn links
-- "Looking for job" status
-- Complete profiles ready for talent search
+---
 
-**Employers:**
-- Company name, size, industry
-- Company website
-- Ready to post jobs and search talent
+### `seed_challenges.py` - Create Sample Challenges (DEVELOPMENT ONLY)
+**⚠️  NOT RECOMMENDED FOR PRODUCTION**
 
-**Educators:**
-- Organization, specialization
-- Years of teaching experience
-- Admin access to manage challenges
+Creates sample coding challenges for testing.
 
-### Output
-
-The script will display:
-- ✓ Successfully created users
-- ⊗ Skipped users (if already exist)
-- ✗ Any failures
-- 📋 Complete list of test credentials
-
-### Example Output
-
+```bash
+cd backend
+python scripts/seed_challenges.py
 ```
-🌱 Seeding users into database...
 
-✓ Created: Sarah Chen (learner) - sarah.chen@example.com
-  → Profile updated with 7 fields
-✓ Created: Michael Rodriguez (learner) - michael.rodriguez@example.com
-  → Profile updated with 7 fields
-...
+**Creates:**
+- JavaScript challenges (beginner to advanced)
+- Python challenges
+- React challenges
+- Database challenges
+- System design challenges
 
-============================================================
-✓ Successfully created: 8 users
-⊗ Skipped (already exist): 0 users
-✗ Failed: 0 users
-============================================================
+**When to use:**
+- Local development
+- Testing assessment flow
+- Demo presentations
 
-📋 Test Account Credentials:
-All accounts use password: password123
+---
 
-LEARNERS:
-  • sarah.chen@example.com
-  • michael.rodriguez@example.com
-  ...
+## Recommended Workflow
+
+### For Production
+
+1. **Clear the database:**
+   ```bash
+   python scripts/clear_database.py
+   ```
+
+2. **Start the backend:**
+   ```bash
+   python app.py
+   ```
+
+3. **Register real users via the UI:**
+   - Go to `http://localhost:3000/register`
+   - Create educator accounts to manage challenges
+   - Create employer accounts to post jobs
+   - Let learners register organically
+
+4. **Create first admin:**
+   ```javascript
+   // In MongoDB shell
+   db.users.updateOne(
+     { email: "your@email.com" },
+     { $set: { role: "admin", permissions: ["all"] } }
+   )
+   ```
+
+---
+
+### For Development/Testing
+
+1. **Seed test data:**
+   ```bash
+   python scripts/seed_users.py
+   python scripts/seed_challenges.py
+   ```
+
+2. **Start the backend:**
+   ```bash
+   python app.py
+   ```
+
+3. **Login with test accounts:**
+   - Learner: `sarah.chen@example.com` / `password123`
+   - Employer: `hr@techcorp.com` / `password123`
+   - Educator: `instructor@codeacademy.com` / `password123`
+
+---
+
+## Best Practices
+
+### ✅ DO:
+- Use `clear_database.py` when moving to production
+- Create real content through the UI
+- Use seed scripts only for development
+- Keep seed scripts in version control for team development
+- Document any new utility scripts
+
+### ❌ DON'T:
+- Run seed scripts in production
+- Commit production database dumps
+- Share seeded user credentials
+- Use weak passwords in production
+- Skip database backups before clearing
+
+---
+
+## Creating New Utility Scripts
+
+When creating new scripts, follow these guidelines:
+
+1. **Add documentation** at the top explaining what it does
+2. **Add confirmation prompts** for destructive operations
+3. **Handle errors gracefully** with try/except blocks
+4. **Print clear status messages** for user feedback
+5. **Update this README** to document the new script
+
+---
+
+## Security Notes
+
+- **Never** use seeded credentials in production
+- **Always** use environment variables for secrets
+- **Regularly** update seed scripts if user model changes
+- **Test** seed scripts in isolated environment first
+- **Backup** database before running clear_database.py
+
+---
+
+## Troubleshooting
+
+### "ModuleNotFoundError: No module named 'config'"
+Run scripts from the `backend` directory:
+```bash
+cd backend
+python scripts/script_name.py
+```
+
+### "Connection refused" or database errors
+Ensure MongoDB is running:
+```bash
+# Check MongoDB status
+sudo systemctl status mongod
+
+# Start MongoDB if needed
+sudo systemctl start mongod
+```
+
+### Seed script creates duplicate users
+Clear database first:
+```bash
+python scripts/clear_database.py
 ```
 
 ---
 
-## Challenge Seeding
-
-The `seed_challenges.py` script populates the database with sample coding challenges for the SkillChain platform.
-
-### Usage
-
-```bash
-# Make sure you're in the backend directory
-cd backend
-
-# Run the seeding script
-python scripts/seed_challenges.py
-```
-
-### What Gets Created
-
-The script creates 10+ sample challenges across different skills and difficulty levels:
-
-**React Challenges:**
-- Build a Counter Component (Beginner)
-- Todo List with State Management (Intermediate)
-
-**Python Challenges:**
-- List Comprehension Basics (Beginner)
-- Dictionary Data Processing (Intermediate)
-
-**JavaScript Challenges:**
-- Array Manipulation Basics (Beginner)
-- Async/Await Data Fetching (Intermediate)
-
-**TypeScript Challenges:**
-- Type-Safe User Interface (Beginner)
-
-**SQL Challenges:**
-- Basic SQL Queries (Beginner)
-
-**Node.js Challenges:**
-- Express REST API Endpoint (Intermediate)
-
-### Challenge Structure
-
-Each challenge includes:
-- **Title and description**: What the challenge is about
-- **Skill and difficulty level**: For proper categorization
-- **Prompt**: Detailed instructions for the user
-- **Starter code**: Template code to begin with
-- **Test cases**: Expected inputs and outputs
-- **Time limits**: Recommended and maximum time
-- **Expected concepts**: What skills are being tested
-
-### Output
-
-The script will display:
-- ✓ Successfully created challenges
-- ✗ Any failures
-- 📊 Statistics by skill and difficulty level
-
-### Example Output
-
-```
-🌱 Seeding challenges into database...
-
-✓ Created: Build a Counter Component (react - beginner)
-✓ Created: Todo List with State Management (react - intermediate)
-✓ Created: List Comprehension Basics (python - beginner)
-...
-
-============================================================
-✓ Successfully created: 10 challenges
-✗ Failed: 0 challenges
-============================================================
-
-📊 Challenge Statistics:
-Total challenges: 10
-
-By skill:
-  - react: 2
-  - python: 2
-  - javascript: 2
-  - typescript: 1
-  - sql: 1
-  - nodejs: 2
-
-By difficulty:
-  - beginner: 6
-  - intermediate: 4
-```
-
-### Requirements
-
-- MongoDB connection must be configured in `.env`
-- Backend dependencies must be installed (`pip install -r requirements.txt`)
-
-### Re-running the Script
-
-The script can be run multiple times. It will create new challenge records each time. To avoid duplicates, you may want to clear the challenges collection first:
-
-```python
-# In Python shell or script
-from config.database import db
-db.challenges.delete_many({})
-```
-
-## Future Scripts
-
-Additional scripts will be added for:
-- User seeding
-- Assessment data migration
-- Database cleanup utilities
-- Analytics data generation
+For full production setup instructions, see:
+- [PRODUCTION_SETUP.md](../../PRODUCTION_SETUP.md) in root directory
+- [QUICK_START.md](../../QUICK_START.md) for initial setup

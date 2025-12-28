@@ -122,6 +122,39 @@ export function Header() {
                 </div>
               )}
 
+              {/* Jobs Dropdown (Learners) */}
+              {isAuthenticated && user?.user_type === 'learner' && (
+                <div className="relative">
+                  <button
+                    onClick={() => toggleDropdown('jobs')}
+                    className="px-3 py-2 text-gray-600 hover:text-black transition-colors flex items-center gap-1"
+                  >
+                    Jobs
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {openDropdown === 'jobs' && (
+                    <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                      <Link
+                        href="/jobs/matched"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        Matched Jobs
+                      </Link>
+                      <Link
+                        href="/jobs/my-applications"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                        onClick={() => setOpenDropdown(null)}
+                      >
+                        My Applications
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Jobs Dropdown (Employer only) */}
               {isAuthenticated && user?.user_type === 'employer' && (
                 <div className="relative">
@@ -294,6 +327,29 @@ export function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     My Job Postings
+                  </Link>
+                </div>
+              )}
+
+              {/* Jobs Section (Learners) */}
+              {isAuthenticated && user?.user_type === 'learner' && (
+                <div className="px-2 py-1 mt-2">
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                    Jobs
+                  </div>
+                  <Link
+                    href="/jobs/matched"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Matched Jobs
+                  </Link>
+                  <Link
+                    href="/jobs/my-applications"
+                    className="block text-gray-600 hover:text-black transition-colors py-2 pl-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    My Applications
                   </Link>
                 </div>
               )}

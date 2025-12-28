@@ -24,6 +24,7 @@ from routes.skill_assessments import skill_assessment_bp
 from routes.user_profiles import user_profile_bp
 from routes.challenges import challenges_bp
 from routes.job_postings import job_posting_bp
+from routes.applications import applications_bp
 
 
 def create_app():
@@ -65,6 +66,7 @@ def create_app():
     app.register_blueprint(user_profile_bp)
     app.register_blueprint(challenges_bp, url_prefix='/api/challenges')
     app.register_blueprint(job_posting_bp, url_prefix='/api/jobs')
+    app.register_blueprint(applications_bp)
 
     # Health check endpoint
     @app.route('/health', methods=['GET'])

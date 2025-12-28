@@ -827,6 +827,53 @@ class ApiClient {
   async getJobPostingStats(): Promise<ApiResponse<any>> {
     return this.request('/api/jobs/stats');
   }
+
+  // ========== Job Application & Matching Endpoints ==========
+
+  // Submit job application (learners only)
+  async submitApplication(data: {
+    job_id: string;
+    cover_letter?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request('/api/applications', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Get my applications (learners only)
+  async getMyApplications(): Promise<ApiResponse<any[]>> {
+    return this.request('/api/applications/my-applications');
+  }
+
+  // Get applications for a job (employers only)
+  async getJobApplications(jobId: string): Promise<ApiResponse<{
+    job: any;
+    applicants: any[];
+    total_applicants: number;
+  }>> {
+    return this.request(`/api/applications/job/${jobId}`);
+  }
+
+  // Update application status (employers only)
+  async updateApplicationStatus(applicationId: string, data: {
+    status: string;
+    notes?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request(`/api/applications/${applicationId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Get matched jobs for learner with AI matching
+  async getMatchedJobs(minScore: number = 60): Promise<ApiResponse<{
+    jobs: any[];
+    total_matches: number;
+    min_match_score: number;
+  }>> {
+    return this.request(`/api/applications/matched-jobs?min_score=${minScore}`);
+  }
 }
 
 export const api = new ApiClient();

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ToastProvider } from "@/components/ui/Toast";
 import { Header } from "@/components/layout/Header";
 
 const inter = Inter({
@@ -10,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ProcureChain - Procurement Transparency Platform",
-  description: "AI-powered procurement transparency and anomaly detection platform",
+  title: "SkillChain - Skill Verification & Job Matching Platform",
+  description: "AI-powered skill verification and job matching platform connecting verified talent with opportunities",
 };
 
 export default function RootLayout({
@@ -21,11 +22,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>
-        <AuthProvider>
-          <Header />
-          <main>{children}</main>
-        </AuthProvider>
+      <body
+        className={`${inter.variable} font-sans antialiased`}
+        suppressHydrationWarning
+      >
+        <ToastProvider>
+          <AuthProvider>
+            <Header />
+            <main>{children}</main>
+          </AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );
